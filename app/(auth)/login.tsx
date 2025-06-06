@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link, router } from 'expo-router';
+import { Link } from 'expo-router';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -19,17 +19,19 @@ import Animated, {
   withSequence,
 } from 'react-native-reanimated';
 import { Eye, EyeOff, Mail, Lock, Star } from 'lucide-react-native';
+import { useAuthStore } from '@/stores/auth';
 
 const { height } = Dimensions.get('window');
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { login, isLoading } = useAuthStore();
+  const [email, setEmail] = useState('user@lunar.app'); // Default untuk testing
+  const [password, setPassword] = useState('password123'); // Default untuk testing
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   // Generate stars data with unique IDs
   const starsData = React.useMemo(() => 
@@ -132,14 +134,15 @@ export default function LoginScreen() {
       return;
     }
 
-    setIsLoading(true);
+    setLoginError('');
     
-    // Simulate login process
-    setTimeout(() => {
-      setIsLoading(false);
-      // Navigate to main app
-      router.replace('/(tabs)');
-    }, 2000);
+    // Use auth store login method
+    const result = await login(email, password);
+    
+    if (!result.success) {
+      setLoginError(result.error || 'Login gagal');
+    }
+    // Navigation akan dihandle otomatis oleh useProtectedRoute hook
   };
 
   const handleGoogleLogin = () => {
@@ -271,6 +274,23 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
             {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+          </View>
+
+          {/* Login Error Display */}
+          {loginError ? (
+            <View style={styles.loginErrorContainer}>
+              <Text style={styles.loginErrorText}>{loginError}</Text>
+            </View>
+          ) : null}
+
+          {/* Test Credentials Info */}
+          <View style={styles.testCredentialsContainer}>
+            <Text style={styles.testCredentialsTitle}>🧪 Akun Test:</Text>
+            <Text style={styles.testCredentialsText}>Email: user@lunar.app</Text>
+            <Text style={styles.testCredentialsText}>Password: password123</Text>
+            <Text style={styles.testCredentialsSubtext}>
+              Atau email: admin@lunar.app dengan password: admin123
+            </Text>
           </View>
 
           {/* Remember Me & Forgot Password */}
@@ -659,5 +679,46 @@ const styles = StyleSheet.create({
     color: '#d4af37',
     textAlign: 'center',
     opacity: 0.8,
+  },
+  loginErrorContainer: {
+    backgroundColor: 'rgba(244, 67, 54, 0.1)',
+    borderColor: 'rgba(244, 67, 54, 0.3)',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  loginErrorText: {
+    fontSize: 14,
+    fontFamily: 'Poppins-Medium',
+    color: '#FF5252',
+    textAlign: 'center',
+  },
+  testCredentialsContainer: {
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    borderColor: 'rgba(76, 175, 80, 0.3)',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  testCredentialsTitle: {
+    fontSize: 14,
+    fontFamily: 'Poppins-SemiBold',
+    color: '#4CAF50',
+    marginBottom: 8,
+  },
+  testCredentialsText: {
+    fontSize: 13,
+    fontFamily: 'Poppins-Medium',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  testCredentialsSubtext: {
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+    color: '#FFFFFF',
+    opacity: 0.7,
+    marginTop: 4,
   },
 });

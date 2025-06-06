@@ -12,7 +12,7 @@
     "@eva-design/eva": "^2.2.0",
     "@expo-google-fonts/poppins": "^0.4.0",
     "@expo/vector-icons": "^14.0.0",
-    "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-async-storage/async-storage": "^1.23.1",
     "@tanstack/react-query": "^5.0.0",
     "@ui-kitten/components": "^5.3.1",
     "@ui-kitten/eva-icons": "^5.3.1",
@@ -38,14 +38,14 @@
     "react-native-screens": "3.31.1",
     "react-native-svg": "15.2.0",
     "react-native-web": "~0.19.10",
-    "zustand": "^4.4.7"
+    "zustand": "^4.5.7"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/json-schema": "^7.0.15",
     "@types/react": "~18.2.45",
-    "typescript": "~5.3.3",
     "eslint": "^8.57.0",
-    "eslint-config-expo": "~7.1.2"
+    "eslint-config-expo": "~7.1.2",
+    "typescript": "~5.3.3"
   }
 }

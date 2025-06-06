@@ -3,13 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
   TextInput,
   ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link, router } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,15 +17,15 @@ import Animated, {
   withSequence,
 } from 'react-native-reanimated';
 import { ChevronLeft, Mail, Lock, CircleCheck as CheckCircle, Clock } from 'lucide-react-native';
-
-const { width, height } = Dimensions.get('window');
+import { useAuthStore } from '@/stores/auth';
 
 export default function ForgotPasswordScreen() {
+  const router = useRouter();
+  const { resetPassword, isLoading } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
@@ -56,6 +55,7 @@ export default function ForgotPasswordScreen() {
         true
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep]);
 
   useEffect(() => {
@@ -68,7 +68,7 @@ export default function ForgotPasswordScreen() {
     }
   }, [resendTimer]);
 
-  const validateEmail = (email) => {
+  const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email) {
       setEmailError('Email harus diisi');
@@ -101,14 +101,17 @@ export default function ForgotPasswordScreen() {
   const handleSendReset = async () => {
     if (!validateEmail(email)) return;
 
-    setIsLoading(true);
+    setEmailError('');
     
-    // Simulate sending email
-    setTimeout(() => {
-      setIsLoading(false);
+    // Use auth store reset password method
+    const result = await resetPassword(email);
+    
+    if (result.success) {
       setCurrentStep(2);
       setResendTimer(60); // 60 seconds cooldown
-    }, 2000);
+    } else {
+      setEmailError(result.error || 'Gagal mengirim email reset');
+    }
   };
 
   const handleResendEmail = () => {
@@ -122,18 +125,13 @@ export default function ForgotPasswordScreen() {
   const handleResetPassword = async () => {
     if (!validatePasswords()) return;
 
-    setIsLoading(true);
+    // Simulate password reset success
+    setCurrentStep(4);
     
-    // Simulate password reset
+    // Auto redirect after 3 seconds
     setTimeout(() => {
-      setIsLoading(false);
-      setCurrentStep(4);
-      
-      // Auto redirect after 3 seconds
-      setTimeout(() => {
-        router.replace('/(auth)/login');
-      }, 3000);
-    }, 2000);
+      setCurrentStep(1); // Reset to email step for demo
+    }, 3000);
   };
 
   // Animated styles
@@ -369,9 +367,11 @@ export default function ForgotPasswordScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ChevronLeft size={24} color="#FFFFFF" />
-        </TouchableOpacity>
+        <Link href="/(auth)/login" asChild>
+          <TouchableOpacity style={styles.backButton}>
+            <ChevronLeft size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </Link>
         
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Reset Password</Text>

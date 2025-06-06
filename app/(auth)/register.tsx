@@ -8,7 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link, router } from 'expo-router';
+import { Link } from 'expo-router';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -16,6 +16,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { Eye, EyeOff, Mail, Lock, User, ChevronLeft } from 'lucide-react-native';
+import { useAuthStore } from '@/stores/auth';
 
 // Interfaces
 interface FormData {
@@ -44,6 +45,7 @@ interface MadhabOption {
 }
 
 export default function RegisterScreen() {
+  const { register, isLoading } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
@@ -56,7 +58,6 @@ export default function RegisterScreen() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
   // Animation values
@@ -159,14 +160,14 @@ export default function RegisterScreen() {
   };
 
   const handleRegister = async () => {
-    setIsLoading(true);
+    // Use auth store register method
+    const result = await register(formData.email, formData.password, formData.fullName);
     
-    // Simulate registration process
-    setTimeout(() => {
-      setIsLoading(false);
-      // Navigate to main app or verification screen
-      router.replace('/(tabs)');
-    }, 2000);
+    if (!result.success) {
+      // Error handling could be improved by showing user feedback
+      console.warn('Registration failed:', result.error);
+    }
+    // Navigation akan dihandle otomatis oleh useProtectedRoute hook
   };
 
   const updateFormData = (field: keyof FormData, value: string | boolean) => {
@@ -375,9 +376,11 @@ export default function RegisterScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ChevronLeft size={24} color="#FFFFFF" />
-        </TouchableOpacity>
+        <Link href="/(auth)/login" asChild>
+          <TouchableOpacity style={styles.backButton}>
+            <ChevronLeft size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </Link>
         
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Daftar Akun</Text>
