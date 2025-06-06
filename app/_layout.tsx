@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as eva from '@eva-design/eva';
@@ -10,27 +10,37 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useFonts } from '@/hooks/useFonts';
 import { lunarLightTheme, customMapping } from '@/config/theme';
-import * as SplashScreen from 'expo-splash-screen';
+import { SplashScreen } from '@/components/SplashScreen';
+import * as ExpoSplashScreen from 'expo-splash-screen';
 
 // Create a client
 const queryClient = new QueryClient();
 
 // Prevent splash screen from auto-hiding
-SplashScreen.preventAutoHideAsync();
+ExpoSplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   useFrameworkReady();
   
   const [fontsLoaded, fontError] = useFonts();
+  const [showCustomSplash, setShowCustomSplash] = useState(true);
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
+      ExpoSplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
 
+  const handleSplashFinish = () => {
+    setShowCustomSplash(false);
+  };
+
   if (!fontsLoaded && !fontError) {
     return null;
+  }
+
+  if (showCustomSplash) {
+    return <SplashScreen onFinish={handleSplashFinish} />;
   }
 
   return (
@@ -41,10 +51,11 @@ export default function RootLayout() {
           <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaProvider>
               <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="+not-found" />
               </Stack>
-              <StatusBar style="auto" />
+              <StatusBar style="light" />
             </SafeAreaProvider>
           </GestureHandlerRootView>
         </ApplicationProvider>
