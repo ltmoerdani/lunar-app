@@ -1,20 +1,42 @@
+import React from 'react';
 import { Tabs } from 'expo-router';
 import { Icon } from '@ui-kitten/components';
 import { Calendar, Target, ChartBar as BarChart3, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const TabIcon = ({ name, color, size }: { name: string; color: string; size: number }) => {
-  const iconComponents = {
-    today: () => <Icon name="moon-outline" fill={color} style={{ width: size, height: size }} />,
-    calendar: () => <Calendar color={color} size={size} />,
-    planning: () => <Target color={color} size={size} />,
-    progress: () => <BarChart3 color={color} size={size} />,
-    more: () => <MoreHorizontal color={color} size={size} />,
-  };
-
-  const IconComponent = iconComponents[name as keyof typeof iconComponents];
-  return IconComponent ? IconComponent() : null;
+// Define types for tab icon props
+type TabIconProps = {
+  color: string;
+  size: number;
 };
+
+// Extracted tab icon components for better performance
+const TodayTabIcon = React.memo(({ color, size }: TabIconProps) => (
+  <Icon name="moon-outline" fill={color} style={{ width: size, height: size }} />
+));
+
+const CalendarTabIcon = React.memo(({ color, size }: TabIconProps) => (
+  <Calendar color={color} size={size} />
+));
+
+const PlanningTabIcon = React.memo(({ color, size }: TabIconProps) => (
+  <Target color={color} size={size} />
+));
+
+const ProgressTabIcon = React.memo(({ color, size }: TabIconProps) => (
+  <BarChart3 color={color} size={size} />
+));
+
+const MoreTabIcon = React.memo(({ color, size }: TabIconProps) => (
+  <MoreHorizontal color={color} size={size} />
+));
+
+// Display names for debugging
+TodayTabIcon.displayName = 'TodayTabIcon';
+CalendarTabIcon.displayName = 'CalendarTabIcon';
+PlanningTabIcon.displayName = 'PlanningTabIcon';
+ProgressTabIcon.displayName = 'ProgressTabIcon';
+MoreTabIcon.displayName = 'MoreTabIcon';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -46,35 +68,35 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Today',
-          tabBarIcon: ({ color, size }) => <TabIcon name="today" color={color} size={size} />,
+          tabBarIcon: TodayTabIcon,
         }}
       />
       <Tabs.Screen
         name="calendar"
         options={{
           title: 'Calendar',
-          tabBarIcon: ({ color, size }) => <TabIcon name="calendar" color={color} size={size} />,
+          tabBarIcon: CalendarTabIcon,
         }}
       />
       <Tabs.Screen
         name="planning"
         options={{
           title: 'Planning',
-          tabBarIcon: ({ color, size }) => <TabIcon name="planning" color={color} size={size} />,
+          tabBarIcon: PlanningTabIcon,
         }}
       />
       <Tabs.Screen
         name="progress"
         options={{
           title: 'Progress',
-          tabBarIcon: ({ color, size }) => <TabIcon name="progress" color={color} size={size} />,
+          tabBarIcon: ProgressTabIcon,
         }}
       />
       <Tabs.Screen
         name="more"
         options={{
           title: 'More',
-          tabBarIcon: ({ color, size }) => <TabIcon name="more" color={color} size={size} />,
+          tabBarIcon: MoreTabIcon,
         }}
       />
     </Tabs>
