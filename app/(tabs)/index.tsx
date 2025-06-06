@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
-import { Layout, Text, Card } from '@ui-kitten/components';
+import { Layout, Text } from '@ui-kitten/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFastingStore } from '@/stores/fasting';
 import { FocusCard } from '@/components/ui/FocusCard';
@@ -24,7 +24,7 @@ export default function TodayScreen() {
     loadTodayAnalysis();
     loadOpportunities();
     calculateStats();
-  }, []);
+  }, [loadTodayAnalysis, loadOpportunities, calculateStats]);
 
   const handleCommitFasting = (type: FastingType, niat: string) => {
     commitTodayPlan(type, niat);

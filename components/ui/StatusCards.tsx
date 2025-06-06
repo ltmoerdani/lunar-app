@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Card, Text, Layout, ProgressBar } from '@ui-kitten/components';
 import { FastingStats } from '@/types/fasting';
 
@@ -7,7 +7,7 @@ interface StatusCardsProps {
   stats: FastingStats;
 }
 
-export function StatusCards({ stats }: StatusCardsProps) {
+export function StatusCards({ stats }: Readonly<StatusCardsProps>) {
   const getProgressColor = (percentage: number) => {
     if (percentage >= 80) return '#4CAF50';
     if (percentage >= 60) return '#FF9800';

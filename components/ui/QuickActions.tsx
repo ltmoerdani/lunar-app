@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, Pressable } from 'react-native';
-import { Text, Layout, Icon } from '@ui-kitten/components';
+import { StyleSheet, Pressable } from 'react-native';
+import { Text, Layout } from '@ui-kitten/components';
 import { Calendar, Target, ChartBar as BarChart3, BookOpen, Bell, Settings, MessageCircle, FileText } from 'lucide-react-native';
 
 interface QuickActionsProps {
@@ -14,7 +14,7 @@ interface ActionItem {
   sublabel: string;
 }
 
-export function QuickActions({ onActionPress }: QuickActionsProps) {
+export function QuickActions({ onActionPress }: Readonly<QuickActionsProps>) {
   const actions: ActionItem[] = [
     {
       id: 'calendar',

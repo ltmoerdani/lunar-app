@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Card, Text, Button, Layout } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FastingType, TodayAnalysis } from '@/types/fasting';
@@ -18,14 +18,23 @@ export function FocusCard({
   onViewDetail, 
   onReschedule, 
   onSkipToday 
-}: FocusCardProps) {
+}: Readonly<FocusCardProps>) {
   const getTypeDisplayName = (type: FastingType): string => {
     const names = {
       [FastingType.QADHA_RAMADAN]: 'Qadha Ramadan',
-      [FastingType.SUNNAH_SENIN_KAMIS]: 'Puasa Senin',
-      [FastingType.SUNNAH_AYYAMUL_BIDH]: 'Ayyamul Bidh',
+      [FastingType.QADHA_OTHER]: 'Qadha Lainnya',
       [FastingType.NAZAR]: 'Nazar',
-      // Add other types as needed
+      [FastingType.KAFARAT]: 'Kafarat',
+      [FastingType.SUNNAH_SENIN_KAMIS]: 'Puasa Senin Kamis',
+      [FastingType.SUNNAH_AYYAMUL_BIDH]: 'Ayyamul Bidh',
+      [FastingType.SUNNAH_ASYURA]: 'Asyura',
+      [FastingType.SUNNAH_ARAFAH]: 'Arafah',
+      [FastingType.SUNNAH_TARWIYAH]: 'Tarwiyah',
+      [FastingType.SUNNAH_SYAWAL]: 'Syawal',
+      [FastingType.SUNNAH_MUHARRAM]: 'Muharram',
+      [FastingType.SUNNAH_SYABAN]: 'Syaban',
+      [FastingType.SUNNAH_DAUD]: 'Daud',
+      [FastingType.SUNNAH_OTHER]: 'Sunnah Lainnya',
     };
     return names[type] || type;
   };
@@ -59,8 +68,8 @@ export function FocusCard({
             <Text category="s1" style={styles.sectionTitle}>
               💫 Bisa niat hari ini:
             </Text>
-            {analysis.availableTypes.map((type, index) => (
-              <Text key={index} category="p2" style={styles.typeItem}>
+            {analysis.availableTypes.map((type) => (
+              <Text key={type} category="p2" style={styles.typeItem}>
                 ✨ {getTypeDisplayName(type)}
               </Text>
             ))}
@@ -85,8 +94,8 @@ export function FocusCard({
             <Text category="s1" style={styles.sectionTitle}>
               💡 Smart Recommendation:
             </Text>
-            {analysis.recommendations.map((rec, index) => (
-              <Text key={index} category="p2" style={styles.recommendation}>
+            {analysis.recommendations.map((rec) => (
+              <Text key={rec} category="p2" style={styles.recommendation}>
                 "{rec}"
               </Text>
             ))}

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FastingRecord, FastingPlan, FastingStats, TodayAnalysis, FastingOpportunity, FastingType, FastingStatus } from '@/types/fasting';
+import { FastingRecord, FastingPlan, FastingStats, TodayAnalysis, FastingOpportunity, FastingType, FastingStatus, Priority } from '@/types/fasting';
 
 interface FastingState {
   // State
@@ -171,7 +171,7 @@ export const useFastingStore = create<FastingState>((set, get) => ({
       {
         date: '2024-11-14',
         types: [FastingType.SUNNAH_SENIN_KAMIS],
-        priority: 'medium' as const,
+        priority: Priority.MEDIUM,
         successRate: 95,
         conflicts: [],
         hijriDate: '21 ربيع الأول 1446',
@@ -180,7 +180,7 @@ export const useFastingStore = create<FastingState>((set, get) => ({
       {
         date: '2024-11-16',
         types: [FastingType.SUNNAH_AYYAMUL_BIDH],
-        priority: 'high' as const,
+        priority: Priority.HIGH,
         successRate: 98,
         conflicts: [],
         specialEvent: 'Ayyamul Bidh',
@@ -195,12 +195,6 @@ export const useFastingStore = create<FastingState>((set, get) => ({
   calculateStats: () => {
     const { records } = get();
     const completedRecords = records.filter(r => r.status === FastingStatus.COMPLETED);
-    
-    // Calculate current streak
-    let currentStreak = 0;
-    const sortedRecords = [...completedRecords].sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
     
     // Mock stats calculation
     const stats: FastingStats = {

@@ -38,6 +38,27 @@ PlanningTabIcon.displayName = 'PlanningTabIcon';
 ProgressTabIcon.displayName = 'ProgressTabIcon';
 MoreTabIcon.displayName = 'MoreTabIcon';
 
+// Wrapper functions for React Navigation tabBarIcon prop - extracted to avoid inline functions
+const renderTodayIcon = ({ color, size }: TabIconProps) => (
+  <TodayTabIcon color={color} size={size} />
+);
+
+const renderCalendarIcon = ({ color, size }: TabIconProps) => (
+  <CalendarTabIcon color={color} size={size} />
+);
+
+const renderPlanningIcon = ({ color, size }: TabIconProps) => (
+  <PlanningTabIcon color={color} size={size} />
+);
+
+const renderProgressIcon = ({ color, size }: TabIconProps) => (
+  <ProgressTabIcon color={color} size={size} />
+);
+
+const renderMoreIcon = ({ color, size }: TabIconProps) => (
+  <MoreTabIcon color={color} size={size} />
+);
+
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
@@ -68,35 +89,35 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Today',
-          tabBarIcon: TodayTabIcon,
+          tabBarIcon: renderTodayIcon,
         }}
       />
       <Tabs.Screen
         name="calendar"
         options={{
           title: 'Calendar',
-          tabBarIcon: CalendarTabIcon,
+          tabBarIcon: renderCalendarIcon,
         }}
       />
       <Tabs.Screen
         name="planning"
         options={{
           title: 'Planning',
-          tabBarIcon: PlanningTabIcon,
+          tabBarIcon: renderPlanningIcon,
         }}
       />
       <Tabs.Screen
         name="progress"
         options={{
           title: 'Progress',
-          tabBarIcon: ProgressTabIcon,
+          tabBarIcon: renderProgressIcon,
         }}
       />
       <Tabs.Screen
         name="more"
         options={{
           title: 'More',
-          tabBarIcon: MoreTabIcon,
+          tabBarIcon: renderMoreIcon,
         }}
       />
     </Tabs>
