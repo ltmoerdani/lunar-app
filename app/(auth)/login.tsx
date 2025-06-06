@@ -17,11 +17,10 @@ import Animated, {
   withTiming,
   withRepeat,
   withSequence,
-  interpolate,
 } from 'react-native-reanimated';
 import { Eye, EyeOff, Mail, Lock, Star } from 'lucide-react-native';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -31,6 +30,15 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+
+  // Generate stars data with unique IDs
+  const starsData = React.useMemo(() => 
+    Array.from({ length: 20 }, (_, index) => ({
+      id: `star-${Math.random().toString(36).substr(2, 9)}-${index}`,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+    })), []
+  );
 
   // Animation values
   const logoScale = useSharedValue(0.8);
@@ -86,6 +94,7 @@ export default function LoginScreen() {
       -1,
       true
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const validateEmail = (email: string) => {
@@ -175,15 +184,14 @@ export default function LoginScreen() {
 
       {/* Animated Stars */}
       <Animated.View style={[styles.starsContainer, starsAnimatedStyle]}>
-        {[...Array(20)].map((_, index) => (
+        {starsData.map((star) => (
           <View
-            key={index}
+            key={star.id}
             style={[
               styles.star,
               {
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
+                left: `${star.left}%`,
+                top: `${star.top}%`,
               },
             ]}
           >

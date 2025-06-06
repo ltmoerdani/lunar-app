@@ -3,11 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
   TextInput,
   ScrollView,
-  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, router } from 'expo-router';
@@ -17,13 +15,37 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { Eye, EyeOff, Mail, Lock, User, ChevronLeft, Star } from 'lucide-react-native';
+import { Eye, EyeOff, Mail, Lock, User, ChevronLeft } from 'lucide-react-native';
 
-const { width, height } = Dimensions.get('window');
+// Interfaces
+interface FormData {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  madhab: string;
+  language: string;
+  acceptTerms: boolean;
+}
+
+interface FormErrors {
+  fullName?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  madhab?: string;
+  acceptTerms?: string;
+}
+
+interface MadhabOption {
+  id: string;
+  name: string;
+  description: string;
+}
 
 export default function RegisterScreen() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
     password: '',
@@ -35,14 +57,14 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
   // Animation values
   const progressValue = useSharedValue(0);
   const cardOpacity = useSharedValue(0);
   const cardTranslateY = useSharedValue(50);
 
-  const madhabOptions = [
+  const madhabOptions: MadhabOption[] = [
     { id: 'hanafi', name: 'Hanafi', description: 'Mazhab Imam Abu Hanifah' },
     { id: 'shafii', name: 'Syafi\'i', description: 'Mazhab Imam Syafi\'i' },
     { id: 'maliki', name: 'Maliki', description: 'Mazhab Imam Malik' },
@@ -54,10 +76,11 @@ export default function RegisterScreen() {
     cardOpacity.value = withTiming(1, { duration: 800 });
     cardTranslateY.value = withTiming(0, { duration: 800 });
     progressValue.value = withTiming(currentStep / 3, { duration: 500 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep]);
 
   const validateStep1 = () => {
-    const newErrors = {};
+    const newErrors: FormErrors = {};
     
     if (!formData.fullName.trim()) {
       newErrors.fullName = 'Nama lengkap harus diisi';
@@ -84,7 +107,7 @@ export default function RegisterScreen() {
   };
 
   const validateStep2 = () => {
-    const newErrors = {};
+    const newErrors: FormErrors = {};
     
     if (!formData.madhab) {
       newErrors.madhab = 'Pilih mazhab yang Anda ikuti';
@@ -95,7 +118,7 @@ export default function RegisterScreen() {
   };
 
   const validateStep3 = () => {
-    const newErrors = {};
+    const newErrors: FormErrors = {};
     
     if (!formData.acceptTerms) {
       newErrors.acceptTerms = 'Anda harus menyetujui syarat dan ketentuan';
@@ -146,11 +169,11 @@ export default function RegisterScreen() {
     }, 2000);
   };
 
-  const updateFormData = (field, value) => {
+  const updateFormData = (field: keyof FormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+    if (errors[field as keyof FormErrors]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
 
