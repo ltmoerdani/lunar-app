@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { ScrollView, StyleSheet, View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { ScrollView, StyleSheet, View, Text, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, Target, ChartBar as BarChart3, BookOpen, Bell, Settings, MessageCircle, FileText } from 'lucide-react-native';
 import { useFastingStore } from '@/stores/fasting';
 import { FastingType } from '@/types/fasting';
 import { shadowPresets } from '@/utils/shadows';
+import { testSupabaseConnection } from '@/lib/supabase-test';
 
 // Fungsi helper untuk menghitung responsive width
 const getResponsiveActionItemWidth = () => {
@@ -61,6 +62,15 @@ export default function TodayScreen() {
     return 'Monday 20 Rabi\' al-Awwal 1446';
   };
 
+  const handleTestConnection = async () => {
+    const result = await testSupabaseConnection();
+    if (result) {
+      Alert.alert('Connection Test', 'Supabase connection is working!', [{ text: 'OK' }]);
+    } else {
+      Alert.alert('Connection Test', 'Supabase connection failed. Please check your settings.', [{ text: 'OK' }]);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -73,6 +83,15 @@ export default function TodayScreen() {
             </View>
             <View style={styles.syncContainer}>
               <Text style={styles.syncStatus}>Synced ✓</Text>
+              <TouchableOpacity 
+                style={styles.testButton}
+                onPress={async () => {
+                  const result = await testSupabaseConnection();
+                  Alert.alert('Supabase Test', result ? 'Connection successful!' : 'Connection failed!');
+                }}
+              >
+                <Text style={styles.testButtonText}>Test DB</Text>
+              </TouchableOpacity>
             </View>
           </View>
           
@@ -249,6 +268,18 @@ export default function TodayScreen() {
           </View>
         </View>
 
+        {/* Supabase Connection Test */}
+        <View style={styles.connectionTestSection}>
+          <Text style={styles.sectionHeaderTitle}>Supabase Connection</Text>
+          
+          <TouchableOpacity 
+            style={styles.testConnectionButton}
+            onPress={handleTestConnection}
+          >
+            <Text style={styles.testConnectionButtonText}>Test Connection</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
@@ -286,15 +317,29 @@ const styles = StyleSheet.create({
     color: '#212121',
   },
   syncContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  syncStatus: {
     backgroundColor: '#F1F8E9',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
-  },
-  syncStatus: {
     color: '#558B2F',
     fontFamily: 'Inter-Medium',
     fontSize: 12,
+  },
+  testButton: {
+    backgroundColor: '#52C4A0',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  testButtonText: {
+    color: '#FFFFFF',
+    fontFamily: 'Inter-Medium',
+    fontSize: 10,
   },
   greeting: {
     textAlign: 'center',
@@ -524,6 +569,21 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#9E9E9E',
     textAlign: 'center',
+  },
+  connectionTestSection: {
+    paddingHorizontal: 24,
+    marginBottom: 24,
+  },
+  testConnectionButton: {
+    backgroundColor: '#1976D2',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  testConnectionButtonText: {
+    color: '#FFFFFF',
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 14,
   },
   bottomSpacing: {
     height: 20,

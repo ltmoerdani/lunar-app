@@ -3,7 +3,6 @@ import { persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import { AuthUser, AuthState, LoginFormData, RegisterFormData, ForgotPasswordFormData, AuthError } from '@/types/auth';
-import { AuthSession } from '@supabase/supabase-js';
 
 interface AuthStore extends AuthState {
   // Actions
@@ -19,7 +18,7 @@ interface AuthStore extends AuthState {
 
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       // Initial state
       user: null,
       isLoading: true,
@@ -207,7 +206,7 @@ export const useAuthStore = create<AuthStore>()(
         try {
           set({ isLoading: true });
           
-          const { data, error } = await supabase.auth.signInWithOAuth({
+          const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
               redirectTo: `${window.location.origin}/auth/callback`,

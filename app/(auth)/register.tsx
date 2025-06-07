@@ -1,24 +1,38 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
   ScrollView,
+  StyleSheet,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
+import { 
+  Layout, 
+  Text, 
+  Input, 
+  Button, 
+  Icon,
+  Spinner,
+  CheckBox
+} from '@ui-kitten/components';
 import { shadowPresets } from '@/utils/shadows';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
-import { Eye, EyeOff, Mail, Lock, User, ChevronLeft } from 'lucide-react-native';
 import { useAuthStore } from '@/stores/auth';
 import { validateRegisterForm } from '@/utils/validation';
 import { RegisterFormData } from '@/types/auth';
+
+// Icon components for UI Kitten
+const EmailIcon = (props: any) => <Icon {...props} name="email" />;
+const LockIcon = (props: any) => <Icon {...props} name="lock" />;
+const PersonIcon = (props: any) => <Icon {...props} name="person" />;
+const EyeIcon = (props: any) => <Icon {...props} name="eye" />;
+const EyeOffIcon = (props: any) => <Icon {...props} name="eye-off" />;
+const ArrowBackIcon = (props: any) => <Icon {...props} name="arrow-back" />;
 
 export default function RegisterScreen() {
   const { signUp, isLoading } = useAuthStore();
@@ -32,6 +46,7 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [registerSuccess, setRegisterSuccess] = useState(false);
 
   // Animation values
   const cardOpacity = useSharedValue(0);
@@ -41,7 +56,7 @@ export default function RegisterScreen() {
     // Entrance animations
     cardOpacity.value = withTiming(1, { duration: 600 });
     cardTranslateY.value = withTiming(0, { duration: 600 });
-  }, []);
+  }, [cardOpacity, cardTranslateY]);
 
   const updateFormData = (field: keyof RegisterFormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -75,15 +90,27 @@ export default function RegisterScreen() {
       if (result.error.field) {
         setErrors({ [result.error.field]: result.error.message });
       } else {
-        Alert.alert('Registration', result.error.message);
+        Alert.alert('Registration Error', result.error.message);
       }
-    } else if (result.success && result.error) {
-      // Success but with message (e.g., email confirmation required)
-      Alert.alert('Registration Successful', result.error.message);
     } else {
-      Alert.alert('Registration Successful', 'Welcome to Lunar! You can now start your fasting journey.');
+      // Registration successful
+      setRegisterSuccess(true);
+      Alert.alert(
+        'Registration Successful',
+        'Please check your email to verify your account before signing in.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/(auth)/login'),
+          },
+        ]
+      );
     }
   };
+
+  // Toggle password visibility
+  const toggleShowPassword = () => setShowPassword(!showPassword);
+  const toggleShowConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
 
   // Animated styles
   const cardAnimatedStyle = useAnimatedStyle(() => ({
@@ -91,173 +118,178 @@ export default function RegisterScreen() {
     transform: [{ translateY: cardTranslateY.value }],
   }));
 
+  if (registerSuccess) {
+    return (
+      <Layout style={styles.container}>
+        <View style={styles.successContainer}>
+          <Text style={styles.successIcon}>✅</Text>
+          <Text style={styles.successTitle} category="h5">
+            Registration Successful!
+          </Text>
+          <Text style={styles.successMessage} category="s1" appearance="hint">
+            Please check your email to verify your account before signing in.
+          </Text>
+          <Button
+            style={styles.successButton}
+            onPress={() => router.replace('/(auth)/login')}
+            status="primary"
+          >
+            Go to Login
+          </Button>
+        </View>
+      </Layout>
+    );
+  }
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Link href="/(auth)/login" asChild>
-          <TouchableOpacity style={styles.backButton} disabled={isLoading}>
-            <ChevronLeft size={24} color="#424242" />
+      <Layout style={styles.layout}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <ArrowBackIcon style={styles.backIcon} />
           </TouchableOpacity>
-        </Link>
-        
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Create Account</Text>
-          <Text style={styles.headerSubtitle}>Join the fasting community</Text>
+          
+          <View style={styles.iconContainer}>
+            <Text style={styles.moonIcon}>🌙</Text>
+          </View>
+          
+          <Text style={styles.appName} category="h1">Join LUNAR</Text>
+          <Text style={styles.subtitle} category="s1" appearance="hint">
+            Start your spiritual fasting journey today
+          </Text>
         </View>
-      </View>
 
-      {/* Form */}
-      <Animated.View style={[styles.formContainer, cardAnimatedStyle]}>
-        <View style={styles.formCard}>
-          {/* Full Name */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Full Name</Text>
-            <View style={[styles.inputWrapper, errors.fullName ? styles.inputError : null]}>
-              <User size={20} color="#9E9E9E" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
+        {/* Form */}
+        <Animated.View style={[styles.formContainer, cardAnimatedStyle]}>
+          <Layout style={styles.formCard}>
+            {/* Full Name Field */}
+            <View style={styles.inputContainer}>
+              <Input
                 placeholder="Enter your full name"
-                placeholderTextColor="#BDBDBD"
                 value={formData.fullName}
                 onChangeText={(text) => updateFormData('fullName', text)}
                 autoCapitalize="words"
-                editable={!isLoading}
+                autoComplete="name"
+                disabled={isLoading}
+                accessoryLeft={PersonIcon}
+                status={errors.fullName ? 'danger' : 'basic'}
+                caption={errors.fullName}
+                style={styles.input}
               />
             </View>
-            {errors.fullName ? <Text style={styles.errorText}>{errors.fullName}</Text> : null}
-          </View>
 
-          {/* Email */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <View style={[styles.inputWrapper, errors.email ? styles.inputError : null]}>
-              <Mail size={20} color="#9E9E9E" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
+            {/* Email Field */}
+            <View style={styles.inputContainer}>
+              <Input
                 placeholder="Enter your email"
-                placeholderTextColor="#BDBDBD"
                 value={formData.email}
                 onChangeText={(text) => updateFormData('email', text)}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
-                editable={!isLoading}
+                disabled={isLoading}
+                accessoryLeft={EmailIcon}
+                status={errors.email ? 'danger' : 'basic'}
+                caption={errors.email}
+                style={styles.input}
               />
             </View>
-            {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
-          </View>
 
-          {/* Password */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <View style={[styles.inputWrapper, errors.password ? styles.inputError : null]}>
-              <Lock size={20} color="#9E9E9E" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your password"
-                placeholderTextColor="#BDBDBD"
+            {/* Password Field */}
+            <View style={styles.inputContainer}>
+              <Input
+                placeholder="Create a password"
                 value={formData.password}
                 onChangeText={(text) => updateFormData('password', text)}
                 secureTextEntry={!showPassword}
-                autoComplete="password"
-                editable={!isLoading}
-              />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowPassword(!showPassword)}
+                autoComplete="password-new"
                 disabled={isLoading}
-              >
-                {showPassword ? (
-                  <EyeOff size={20} color="#9E9E9E" />
-                ) : (
-                  <Eye size={20} color="#9E9E9E" />
+                accessoryLeft={LockIcon}
+                accessoryRight={(props) => (
+                  <TouchableOpacity onPress={toggleShowPassword}>
+                    {showPassword ? <EyeOffIcon {...props} /> : <EyeIcon {...props} />}
+                  </TouchableOpacity>
                 )}
-              </TouchableOpacity>
-            </View>
-            {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
-          </View>
-
-          {/* Confirm Password */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Confirm Password</Text>
-            <View style={[styles.inputWrapper, errors.confirmPassword ? styles.inputError : null]}>
-              <Lock size={20} color="#9E9E9E" style={styles.inputIcon} />
-              <TextInput
+                status={errors.password ? 'danger' : 'basic'}
+                caption={errors.password}
                 style={styles.input}
+              />
+            </View>
+
+            {/* Confirm Password Field */}
+            <View style={styles.inputContainer}>
+              <Input
                 placeholder="Confirm your password"
-                placeholderTextColor="#BDBDBD"
                 value={formData.confirmPassword}
                 onChangeText={(text) => updateFormData('confirmPassword', text)}
                 secureTextEntry={!showConfirmPassword}
-                editable={!isLoading}
-              />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                autoComplete="password-new"
                 disabled={isLoading}
-              >
-                {showConfirmPassword ? (
-                  <EyeOff size={20} color="#9E9E9E" />
-                ) : (
-                  <Eye size={20} color="#9E9E9E" />
+                accessoryLeft={LockIcon}
+                accessoryRight={(props) => (
+                  <TouchableOpacity onPress={toggleShowConfirmPassword}>
+                    {showConfirmPassword ? <EyeOffIcon {...props} /> : <EyeIcon {...props} />}
+                  </TouchableOpacity>
                 )}
-              </TouchableOpacity>
+                status={errors.confirmPassword ? 'danger' : 'basic'}
+                caption={errors.confirmPassword}
+                style={styles.input}
+              />
             </View>
-            {errors.confirmPassword ? <Text style={styles.errorText}>{errors.confirmPassword}</Text> : null}
-          </View>
 
-          {/* Password Requirements */}
-          <View style={styles.requirementsContainer}>
-            <Text style={styles.requirementsTitle}>Password Requirements:</Text>
-            <Text style={styles.requirementText}>• At least 8 characters long</Text>
-            <Text style={styles.requirementText}>• Contains uppercase and lowercase letters</Text>
-            <Text style={styles.requirementText}>• Contains at least one number</Text>
-            <Text style={styles.requirementText}>• Contains at least one special character (@$!%*?&)</Text>
-          </View>
-
-          {/* Terms and Conditions */}
-          <TouchableOpacity
-            style={styles.termsContainer}
-            onPress={() => updateFormData('acceptTerms', !formData.acceptTerms)}
-            disabled={isLoading}
-          >
-            <View style={[styles.checkbox, formData.acceptTerms && styles.checkboxChecked]}>
-              {formData.acceptTerms && <Text style={styles.checkmark}>✓</Text>}
+            {/* Terms and Conditions */}
+            <View style={styles.termsContainer}>
+              <CheckBox
+                checked={formData.acceptTerms}
+                onChange={(checked) => updateFormData('acceptTerms', checked)}
+                disabled={isLoading}
+                status={errors.acceptTerms ? 'danger' : 'primary'}
+              >
+                <Text style={styles.termsText} category="c1">
+                  I agree to the{' '}
+                  <Text style={styles.linkText} status="info">Terms of Service</Text>
+                  {' '}and{' '}
+                  <Text style={styles.linkText} status="info">Privacy Policy</Text>
+                </Text>
+              </CheckBox>
+              {errors.acceptTerms && (
+                <Text style={styles.errorText} status="danger">
+                  {errors.acceptTerms}
+                </Text>
+              )}
             </View>
-            <Text style={styles.termsText}>
-              I agree to the{' '}
-              <Text style={styles.termsLink}>Terms & Conditions</Text>
-              {' '}and{' '}
-              <Text style={styles.termsLink}>Privacy Policy</Text>
-            </Text>
-          </TouchableOpacity>
-          {errors.acceptTerms ? <Text style={styles.errorText}>{errors.acceptTerms}</Text> : null}
 
-          {/* Register Button */}
-          <TouchableOpacity
-            style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
-            onPress={handleRegister}
-            disabled={isLoading}
-          >
-            <Text style={styles.registerButtonText}>
+            {/* Register Button */}
+            <Button
+              style={styles.registerButton}
+              onPress={handleRegister}
+              disabled={isLoading}
+              accessoryLeft={isLoading ? <Spinner size="small" status="control" /> : undefined}
+              status="primary"
+              size="large"
+            >
               {isLoading ? 'Creating Account...' : 'Create Account'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
+            </Button>
+          </Layout>
+        </Animated.View>
 
-      {/* Footer */}
-      <View style={styles.footer}>
-        <View style={styles.loginContainer}>
-          <Text style={styles.loginText}>Already have an account? </Text>
-          <Link href="/(auth)/login" asChild>
-            <TouchableOpacity disabled={isLoading}>
-              <Text style={styles.loginLink}>Sign in</Text>
-            </TouchableOpacity>
-          </Link>
+        {/* Footer */}
+        <View style={styles.footer}>
+          <View style={styles.loginContainer}>
+            <Text style={styles.loginText} category="s1" appearance="hint">
+              Already have an account?{' '}
+            </Text>
+            <Link href="/(auth)/login" asChild>
+              <TouchableOpacity disabled={isLoading}>
+                <Text style={styles.loginLink} status="info">
+                  Sign in
+                </Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
         </View>
-      </View>
+      </Layout>
     </ScrollView>
   );
 }
@@ -267,162 +299,91 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  layout: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
     paddingTop: 60,
     paddingHorizontal: 24,
-    paddingBottom: 20,
+    paddingBottom: 40,
+    position: 'relative',
   },
   backButton: {
+    position: 'absolute',
+    left: 24,
+    top: 60,
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
-  headerContent: {
-    flex: 1,
+  backIcon: {
+    width: 24,
+    height: 24,
   },
-  headerTitle: {
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#F8FFFE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    ...shadowPresets.medium,
+  },
+  moonIcon: {
     fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#212121',
-    marginBottom: 4,
+    textAlign: 'center',
   },
-  headerSubtitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#757575',
+  appName: {
+    fontFamily: 'Poppins-Bold',
+    color: '#212121',
+    marginBottom: 8,
+  },
+  subtitle: {
+    textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
   formContainer: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingBottom: 40,
   },
   formCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 24,
     ...shadowPresets.large,
-    borderWidth: 1,
-    borderColor: '#F5F5F5',
+    backgroundColor: '#FFFFFF',
   },
   inputContainer: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#424242',
-    marginBottom: 8,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FAFAFA',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  inputIcon: {
-    marginRight: 12,
+    marginBottom: 16,
   },
   input: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#212121',
-  },
-  inputError: {
-    borderColor: '#F44336',
-    backgroundColor: '#FFEBEE',
-  },
-  eyeIcon: {
-    padding: 4,
-  },
-  errorText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#F44336',
-    marginTop: 4,
-  },
-  requirementsContainer: {
-    backgroundColor: '#F8FFFE',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#E8F5E8',
-  },
-  requirementsTitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#424242',
-    marginBottom: 8,
-  },
-  requirementText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#616161',
     marginBottom: 4,
   },
   termsContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 20,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: '#E0E0E0',
-    marginRight: 12,
-    marginTop: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: '#52C4A0',
-    borderColor: '#52C4A0',
-  },
-  checkmark: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontFamily: 'Inter-Bold',
+    marginBottom: 24,
   },
   termsText: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#424242',
-    lineHeight: 20,
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+    marginLeft: 8,
   },
-  termsLink: {
-    color: '#52C4A0',
-    fontFamily: 'Inter-SemiBold',
+  linkText: {
+    fontSize: 12,
+    fontFamily: 'Poppins-SemiBold',
+  },
+  errorText: {
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 32,
   },
   registerButton: {
-    backgroundColor: '#52C4A0',
-    borderRadius: 8,
-    height: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  registerButtonDisabled: {
-    opacity: 0.6,
-  },
-  registerButtonText: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#FFFFFF',
+    marginBottom: 24,
+    borderRadius: 12,
   },
   footer: {
     paddingHorizontal: 24,
@@ -434,13 +395,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loginText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#757575',
+    fontFamily: 'Poppins-Regular',
   },
   loginLink: {
     fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#52C4A0',
+    fontFamily: 'Poppins-SemiBold',
+  },
+  successContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  successIcon: {
+    fontSize: 48,
+    marginBottom: 24,
+  },
+  successTitle: {
+    fontFamily: 'Poppins-Bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  successMessage: {
+    textAlign: 'center',
+    marginBottom: 32,
+    paddingHorizontal: 20,
+    fontFamily: 'Poppins-Regular',
+  },
+  successButton: {
+    paddingHorizontal: 32,
+    borderRadius: 12,
   },
 });
