@@ -1,215 +1,246 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '@/lib/supabase';
+import { AuthUser, AuthState, LoginFormData, RegisterFormData, ForgotPasswordFormData, AuthError } from '@/types/auth';
+import { AuthSession } from '@supabase/supabase-js';
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  avatar?: string;
-  createdAt: string;
-}
-
-interface AuthState {
-  // State
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  hasCompletedOnboarding: boolean;
-
+interface AuthStore extends AuthState {
   // Actions
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
-  resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
-  setUser: (user: User | null) => void;
+  signIn: (data: LoginFormData) => Promise<{ success: boolean; error?: AuthError }>;
+  signUp: (data: RegisterFormData) => Promise<{ success: boolean; error?: AuthError }>;
+  signOut: () => Promise<void>;
+  resetPassword: (data: ForgotPasswordFormData) => Promise<{ success: boolean; error?: AuthError }>;
+  signInWithGoogle: () => Promise<{ success: boolean; error?: AuthError }>;
+  setUser: (user: AuthUser | null) => void;
   setLoading: (loading: boolean) => void;
-  completeOnboarding: () => void;
-  // Development utility
-  clearStorage: () => Promise<void>;
+  initialize: () => Promise<void>;
 }
 
-// Mock users database untuk development
-const mockUsers: (User & { password: string })[] = [
-  {
-    id: '1',
-    email: 'user@lunar.app',
-    password: 'password123',
-    name: 'Test User',
-    avatar: undefined,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    email: 'admin@lunar.app',
-    password: 'admin123',
-    name: 'Admin User',
-    avatar: undefined,
-    createdAt: new Date().toISOString(),
-  },
-];
-
-// Simulasi login delay
-const simulateNetworkDelay = () => new Promise(resolve => setTimeout(resolve, 1500));
-
-export const useAuthStore = create<AuthState>()(
+export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
       // Initial state
       user: null,
+      isLoading: true,
       isAuthenticated: false,
-      isLoading: false,
-      hasCompletedOnboarding: false,
 
-      // Login action
-      login: async (email: string, password: string) => {
-        set({ isLoading: true });
-        
+      // Initialize auth state
+      initialize: async () => {
         try {
-          await simulateNetworkDelay();
+          set({ isLoading: true });
           
-          // Find user in mock database
-          const foundUser = mockUsers.find(
-            u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-          );
+          // Get initial session
+          const { data: { session }, error } = await supabase.auth.getSession();
           
-          if (foundUser) {
-            const { password: _, ...userData } = foundUser;
+          if (error) {
+            console.error('Error getting session:', error);
+            set({ user: null, isAuthenticated: false, isLoading: false });
+            return;
+          }
+
+          if (session?.user) {
             set({ 
-              user: userData, 
+              user: session.user as AuthUser, 
+              isAuthenticated: true, 
+              isLoading: false 
+            });
+          } else {
+            set({ user: null, isAuthenticated: false, isLoading: false });
+          }
+
+          // Listen for auth changes
+          supabase.auth.onAuthStateChange((event, session) => {
+            if (session?.user) {
+              set({ 
+                user: session.user as AuthUser, 
+                isAuthenticated: true, 
+                isLoading: false 
+              });
+            } else {
+              set({ user: null, isAuthenticated: false, isLoading: false });
+            }
+          });
+        } catch (error) {
+          console.error('Error initializing auth:', error);
+          set({ user: null, isAuthenticated: false, isLoading: false });
+        }
+      },
+
+      // Sign in with email and password
+      signIn: async (data: LoginFormData) => {
+        try {
+          set({ isLoading: true });
+          
+          const { data: authData, error } = await supabase.auth.signInWithPassword({
+            email: data.email.trim().toLowerCase(),
+            password: data.password,
+          });
+
+          if (error) {
+            set({ isLoading: false });
+            return { 
+              success: false, 
+              error: { 
+                message: error.message,
+                field: error.message.includes('email') ? 'email' : 'password'
+              } 
+            };
+          }
+
+          if (authData.user) {
+            set({ 
+              user: authData.user as AuthUser, 
               isAuthenticated: true, 
               isLoading: false 
             });
             return { success: true };
-          } else {
-            set({ isLoading: false });
-            return { 
-              success: false, 
-              error: 'Email atau password tidak valid' 
-            };
           }
+
+          set({ isLoading: false });
+          return { success: false, error: { message: 'Login failed' } };
         } catch (error) {
-          console.error('Login error:', error);
+          console.error('Sign in error:', error);
           set({ isLoading: false });
           return { 
             success: false, 
-            error: 'Terjadi kesalahan saat login' 
+            error: { message: 'An unexpected error occurred' } 
           };
         }
       },
 
-      // Register action
-      register: async (email: string, password: string, name: string) => {
-        set({ isLoading: true });
-        
+      // Sign up with email and password
+      signUp: async (data: RegisterFormData) => {
         try {
-          await simulateNetworkDelay();
-          
-          // Check if user already exists
-          const existingUser = mockUsers.find(
-            u => u.email.toLowerCase() === email.toLowerCase()
-          );
-          
-          if (existingUser) {
+          set({ isLoading: true });
+
+          const { data: authData, error } = await supabase.auth.signUp({
+            email: data.email.trim().toLowerCase(),
+            password: data.password,
+            options: {
+              data: {
+                full_name: data.fullName.trim(),
+              },
+            },
+          });
+
+          if (error) {
             set({ isLoading: false });
             return { 
               success: false, 
-              error: 'Email sudah terdaftar' 
+              error: { 
+                message: error.message,
+                field: error.message.includes('email') ? 'email' : 'password'
+              } 
             };
           }
+
+          set({ isLoading: false });
           
-          // Create new user
-          const newUser: User = {
-            id: Date.now().toString(),
-            email: email.toLowerCase(),
-            name,
-            createdAt: new Date().toISOString(),
-          };
-          
-          // Add to mock database
-          mockUsers.push({ ...newUser, password });
-          
-          set({ 
-            user: newUser, 
-            isAuthenticated: true, 
-            isLoading: false 
-          });
-          
+          // Check if email confirmation is required
+          if (authData.user && !authData.session) {
+            return { 
+              success: true, 
+              error: { 
+                message: 'Please check your email to confirm your account before signing in.' 
+              } 
+            };
+          }
+
           return { success: true };
         } catch (error) {
-          console.error('Register error:', error);
+          console.error('Sign up error:', error);
           set({ isLoading: false });
           return { 
             success: false, 
-            error: 'Terjadi kesalahan saat registrasi' 
+            error: { message: 'An unexpected error occurred' } 
           };
         }
       },
 
-      // Reset password action
-      resetPassword: async (email: string) => {
-        set({ isLoading: true });
-        
+      // Sign out
+      signOut: async () => {
         try {
-          await simulateNetworkDelay();
+          set({ isLoading: true });
+          await supabase.auth.signOut();
+          set({ user: null, isAuthenticated: false, isLoading: false });
+        } catch (error) {
+          console.error('Sign out error:', error);
+          set({ isLoading: false });
+        }
+      },
+
+      // Reset password
+      resetPassword: async (data: ForgotPasswordFormData) => {
+        try {
+          set({ isLoading: true });
           
-          const foundUser = mockUsers.find(
-            u => u.email.toLowerCase() === email.toLowerCase()
+          const { error } = await supabase.auth.resetPasswordForEmail(
+            data.email.trim().toLowerCase(),
+            {
+              redirectTo: `${window.location.origin}/reset-password`,
+            }
           );
-          
-          if (foundUser) {
-            // Dalam implementasi nyata, kirim email reset password
-            set({ isLoading: false });
-            return { success: true };
-          } else {
-            set({ isLoading: false });
+
+          set({ isLoading: false });
+
+          if (error) {
             return { 
               success: false, 
-              error: 'Email tidak ditemukan' 
+              error: { message: error.message } 
             };
           }
+
+          return { success: true };
         } catch (error) {
           console.error('Reset password error:', error);
           set({ isLoading: false });
           return { 
             success: false, 
-            error: 'Terjadi kesalahan saat reset password' 
+            error: { message: 'An unexpected error occurred' } 
           };
         }
       },
 
-      // Logout action
-      logout: () => {
-        set({ 
-          user: null, 
-          isAuthenticated: false,
-          hasCompletedOnboarding: false
-        });
+      // Sign in with Google
+      signInWithGoogle: async () => {
+        try {
+          set({ isLoading: true });
+          
+          const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: `${window.location.origin}/auth/callback`,
+            },
+          });
+
+          if (error) {
+            set({ isLoading: false });
+            return { 
+              success: false, 
+              error: { message: error.message } 
+            };
+          }
+
+          // OAuth will redirect, so we don't set loading to false here
+          return { success: true };
+        } catch (error) {
+          console.error('Google sign in error:', error);
+          set({ isLoading: false });
+          return { 
+            success: false, 
+            error: { message: 'An unexpected error occurred' } 
+          };
+        }
       },
 
       // Utility actions
-      setUser: (user: User | null) => {
+      setUser: (user: AuthUser | null) => {
         set({ user, isAuthenticated: !!user });
       },
 
       setLoading: (loading: boolean) => {
         set({ isLoading: loading });
-      },
-
-      completeOnboarding: () => {
-        set({ hasCompletedOnboarding: true });
-      },
-
-      // Development utility
-      clearStorage: async () => {
-        set({ 
-          user: null, 
-          isAuthenticated: false,
-          isLoading: false,
-          hasCompletedOnboarding: false
-        });
-        
-        await AsyncStorage.clear();
       },
     }),
     {
@@ -226,15 +257,11 @@ export const useAuthStore = create<AuthState>()(
           await AsyncStorage.removeItem(name);
         },
       },
-      // Hanya persist data penting, tidak termasuk loading states dan functions
-      partialize: (state: AuthState) => ({
+      // Only persist essential data
+      partialize: (state: AuthStore) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
-        hasCompletedOnboarding: state.hasCompletedOnboarding,
       }),
-      onRehydrateStorage: () => (state: AuthState | undefined) => {
-        return state;
-      },
     }
   )
 );

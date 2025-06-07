@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
-  Platform,
+  Alert,
 } from 'react-native';
 import { Link } from 'expo-router';
 import { shadowPresets } from '@/utils/shadows';
@@ -17,67 +17,76 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
 import { useAuthStore } from '@/stores/auth';
+import { validateLoginForm } from '@/utils/validation';
+import { LoginFormData, AuthError } from '@/types/auth';
 
 export default function LoginScreen() {
-  const { login, isLoading } = useAuthStore();
-  const [email, setEmail] = useState('user@lunar.app');
-  const [password, setPassword] = useState('password123');
+  const { signIn, signInWithGoogle, isLoading } = useAuthStore();
+  const [formData, setFormData] = useState<LoginFormData>({
+    email: '',
+    password: '',
+  });
   const [showPassword, setShowPassword] = useState(false);
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loginError, setLoginError] = useState('');
 
   // Animation values
   const cardOpacity = useSharedValue(0);
   const cardTranslateY = useSharedValue(30);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Entrance animations
     cardOpacity.value = withTiming(1, { duration: 600 });
     cardTranslateY.value = withTiming(0, { duration: 600 });
-  }, [cardOpacity, cardTranslateY]);
+  }, []);
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) {
-      setEmailError('Email is required');
-      return false;
-    } else if (!emailRegex.test(email)) {
-      setEmailError('Invalid email format');
-      return false;
-    } else {
-      setEmailError('');
-      return true;
+  const updateFormData = (field: keyof LoginFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear field error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
     }
-  };
-
-  const validatePassword = (password: string) => {
-    if (!password) {
-      setPasswordError('Password is required');
-      return false;
-    } else if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
-      return false;
-    } else {
-      setPasswordError('');
-      return true;
+    // Clear general login error
+    if (loginError) {
+      setLoginError('');
     }
   };
 
   const handleLogin = async () => {
-    const isEmailValid = validateEmail(email);
-    const isPasswordValid = validatePassword(password);
-    
-    if (!isEmailValid || !isPasswordValid) {
+    // Validate form
+    const validationErrors = validateLoginForm(formData);
+    if (validationErrors.length > 0) {
+      const errorMap: Record<string, string> = {};
+      validationErrors.forEach(error => {
+        if (error.field) {
+          errorMap[error.field] = error.message;
+        }
+      });
+      setErrors(errorMap);
       return;
     }
 
+    // Clear previous errors
+    setErrors({});
     setLoginError('');
+
+    // Attempt login
+    const result = await signIn(formData);
     
-    const result = await login(email, password);
+    if (!result.success && result.error) {
+      if (result.error.field) {
+        setErrors({ [result.error.field]: result.error.message });
+      } else {
+        setLoginError(result.error.message);
+      }
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    const result = await signInWithGoogle();
     
-    if (!result.success) {
-      setLoginError(result.error || 'Login failed');
+    if (!result.success && result.error) {
+      Alert.alert('Sign In Error', result.error.message);
     }
   };
 
@@ -102,50 +111,52 @@ export default function LoginScreen() {
       {/* Form */}
       <Animated.View style={[styles.formContainer, cardAnimatedStyle]}>
         <View style={styles.formCard}>
+          {/* Login Error Display */}
+          {loginError ? (
+            <View style={styles.loginErrorContainer}>
+              <Text style={styles.loginErrorText}>{loginError}</Text>
+            </View>
+          ) : null}
+
           {/* Email Field */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email</Text>
-            <View style={[styles.inputWrapper, emailError ? styles.inputError : null]}>
+            <View style={[styles.inputWrapper, errors.email ? styles.inputError : null]}>
               <Mail size={20} color="#9E9E9E" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Enter your email"
                 placeholderTextColor="#BDBDBD"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  if (emailError) validateEmail(text);
-                }}
-                onBlur={() => validateEmail(email)}
+                value={formData.email}
+                onChangeText={(text) => updateFormData('email', text)}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
+                editable={!isLoading}
               />
             </View>
-            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+            {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
           </View>
 
           {/* Password Field */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Password</Text>
-            <View style={[styles.inputWrapper, passwordError ? styles.inputError : null]}>
+            <View style={[styles.inputWrapper, errors.password ? styles.inputError : null]}>
               <Lock size={20} color="#9E9E9E" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Enter your password"
                 placeholderTextColor="#BDBDBD"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (passwordError) validatePassword(text);
-                }}
-                onBlur={() => validatePassword(password)}
+                value={formData.password}
+                onChangeText={(text) => updateFormData('password', text)}
                 secureTextEntry={!showPassword}
                 autoComplete="password"
+                editable={!isLoading}
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
                 onPress={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
               >
                 {showPassword ? (
                   <EyeOff size={20} color="#9E9E9E" />
@@ -154,27 +165,13 @@ export default function LoginScreen() {
                 )}
               </TouchableOpacity>
             </View>
-            {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
-          </View>
-
-          {/* Login Error Display */}
-          {loginError ? (
-            <View style={styles.loginErrorContainer}>
-              <Text style={styles.loginErrorText}>{loginError}</Text>
-            </View>
-          ) : null}
-
-          {/* Test Credentials Info */}
-          <View style={styles.testCredentialsContainer}>
-            <Text style={styles.testCredentialsTitle}>Test Account</Text>
-            <Text style={styles.testCredentialsText}>Email: user@lunar.app</Text>
-            <Text style={styles.testCredentialsText}>Password: password123</Text>
+            {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
           </View>
 
           {/* Forgot Password */}
           <View style={styles.forgotContainer}>
             <Link href="/(auth)/forgot-password" asChild>
-              <TouchableOpacity>
+              <TouchableOpacity disabled={isLoading}>
                 <Text style={styles.forgotText}>Forgot password?</Text>
               </TouchableOpacity>
             </Link>
@@ -186,11 +183,9 @@ export default function LoginScreen() {
             onPress={handleLogin}
             disabled={isLoading}
           >
-            {isLoading ? (
-              <Text style={styles.loginButtonText}>Signing in...</Text>
-            ) : (
-              <Text style={styles.loginButtonText}>Sign In</Text>
-            )}
+            <Text style={styles.loginButtonText}>
+              {isLoading ? 'Signing in...' : 'Sign In'}
+            </Text>
           </TouchableOpacity>
 
           {/* Divider */}
@@ -200,18 +195,15 @@ export default function LoginScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Social Login Buttons */}
-          <TouchableOpacity style={styles.socialButton}>
+          {/* Google Login Button */}
+          <TouchableOpacity 
+            style={styles.socialButton}
+            onPress={handleGoogleSignIn}
+            disabled={isLoading}
+          >
             <Text style={styles.googleIcon}>G</Text>
             <Text style={styles.socialButtonText}>Continue with Google</Text>
           </TouchableOpacity>
-
-          {Platform.OS === 'ios' && (
-            <TouchableOpacity style={styles.socialButton}>
-              <Text style={styles.appleIcon}>🍎</Text>
-              <Text style={styles.socialButtonText}>Continue with Apple</Text>
-            </TouchableOpacity>
-          )}
         </View>
       </Animated.View>
 
@@ -220,7 +212,7 @@ export default function LoginScreen() {
         <View style={styles.registerContainer}>
           <Text style={styles.registerText}>Don't have an account? </Text>
           <Link href="/(auth)/register" asChild>
-            <TouchableOpacity>
+            <TouchableOpacity disabled={isLoading}>
               <Text style={styles.registerLink}>Sign up</Text>
             </TouchableOpacity>
           </Link>
@@ -280,6 +272,20 @@ const styles = StyleSheet.create({
     ...shadowPresets.large,
     borderWidth: 1,
     borderColor: '#F5F5F5',
+  },
+  loginErrorContainer: {
+    backgroundColor: '#FFEBEE',
+    borderColor: '#FFCDD2',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  loginErrorText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#F44336',
+    textAlign: 'center',
   },
   inputContainer: {
     marginBottom: 20,
@@ -380,10 +386,6 @@ const styles = StyleSheet.create({
     color: '#4285F4',
     marginRight: 12,
   },
-  appleIcon: {
-    fontSize: 18,
-    marginRight: 12,
-  },
   socialButtonText: {
     fontSize: 16,
     fontFamily: 'Inter-Medium',
@@ -407,39 +409,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
     color: '#52C4A0',
-  },
-  loginErrorContainer: {
-    backgroundColor: '#FFEBEE',
-    borderColor: '#FFCDD2',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  loginErrorText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#F44336',
-    textAlign: 'center',
-  },
-  testCredentialsContainer: {
-    backgroundColor: '#F1F8E9',
-    borderColor: '#DCEDC8',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 20,
-  },
-  testCredentialsTitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#558B2F',
-    marginBottom: 8,
-  },
-  testCredentialsText: {
-    fontSize: 13,
-    fontFamily: 'Inter-Medium',
-    color: '#689F38',
-    marginBottom: 4,
   },
 });

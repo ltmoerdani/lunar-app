@@ -21,7 +21,7 @@ const queryClient = new QueryClient();
 ExpoSplashScreen.preventAutoHideAsync();
 
 function RootLayoutNavigator() {
-  useProtectedRoute(); // Handle authentication flow only after app is ready
+  useProtectedRoute(); // Handle authentication flow
   
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -38,6 +38,8 @@ function RootLayoutNavigator() {
           >
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="auth/callback" />
+            <Stack.Screen name="reset-password" />
             <Stack.Screen name="+not-found" />
           </Stack>
           <StatusBar style="dark" />

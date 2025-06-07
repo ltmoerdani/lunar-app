@@ -1,67 +1,45 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { useAuthStore } from '@/stores/auth';
 
 /**
- * Hook untuk mengelola navigation guard berdasarkan authentication state
- * Mengikuti pattern: Splash → Auth → Tabs
+ * Hook to manage navigation guard based on authentication state
+ * Follows pattern: Splash → Auth → Tabs
  */
 export function useProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { isAuthenticated, isLoading, initialize } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
   const navigationState = useRootNavigationState();
-  const hasNavigated = useRef(false);
+
+  // Initialize auth on mount
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
 
   useEffect(() => {
-    // Pastikan navigation state sudah ready dan router sudah mounted
+    // Wait for navigation state to be ready
     if (!navigationState?.key || navigationState.stale) {
       return;
     }
     
-    // Skip navigation saat masih loading auth state
+    // Skip navigation while auth is loading
     if (isLoading) {
       return;
     }
 
-    // Prevent multiple navigations
-    if (hasNavigated.current) {
-      return;
-    }
+    const inAuthGroup = segments[0] === '(auth)';
 
-    const performNavigation = () => {
-      try {
-        const inAuthGroup = segments[0] === '(auth)';
-
-        if (isAuthenticated) {
-          // User sudah login, pastikan tidak di auth pages
-          if (inAuthGroup || segments.length === 0) {
-            hasNavigated.current = true;
-            router.replace('/(tabs)');
-          }
-        } else if (!inAuthGroup || segments.length === 0) {
-          // User belum login, pastikan di auth pages
-          hasNavigated.current = true;
-          router.replace('/(auth)/login');
-        }
-      } catch (error) {
-        console.warn('Navigation error in useProtectedRoute:', error);
-        hasNavigated.current = false; // Reset flag on error
+    if (isAuthenticated) {
+      // User is authenticated, redirect to main app if in auth pages
+      if (inAuthGroup || segments.length === 0) {
+        router.replace('/(tabs)');
       }
-    };
-
-    // Use requestAnimationFrame to ensure navigation happens after render
-    const rafId = requestAnimationFrame(() => {
-      performNavigation();
-    });
-
-    return () => {
-      cancelAnimationFrame(rafId);
-    };
+    } else {
+      // User is not authenticated, redirect to login if not in auth pages
+      if (!inAuthGroup || segments.length === 0) {
+        router.replace('/(auth)/login');
+      }
+    }
   }, [isAuthenticated, segments, isLoading, router, navigationState?.key, navigationState?.stale]);
-
-  // Reset navigation flag when auth state changes
-  useEffect(() => {
-    hasNavigated.current = false;
-  }, [isAuthenticated]);
 }

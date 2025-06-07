@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -16,26 +16,30 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ChevronLeft, Mail, CircleCheck as CheckCircle } from 'lucide-react-native';
 import { useAuthStore } from '@/stores/auth';
+import { validateForgotPasswordForm } from '@/utils/validation';
+import { ForgotPasswordFormData } from '@/types/auth';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const { resetPassword, isLoading } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(1);
-  const [email, setEmail] = useState('');
-  const [emailError, setEmailError] = useState('');
+  const [formData, setFormData] = useState<ForgotPasswordFormData>({
+    email: '',
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [resendTimer, setResendTimer] = useState(0);
 
   // Animation values
   const cardOpacity = useSharedValue(0);
   const cardTranslateY = useSharedValue(30);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Entrance animations
     cardOpacity.value = withTiming(1, { duration: 600 });
     cardTranslateY.value = withTiming(0, { duration: 600 });
-  }, [cardOpacity, cardTranslateY, currentStep]);
+  }, [currentStep]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Resend timer
     if (resendTimer > 0) {
       const timer = setTimeout(() => {
@@ -45,39 +49,49 @@ export default function ForgotPasswordScreen() {
     }
   }, [resendTimer]);
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) {
-      setEmailError('Email is required');
-      return false;
-    } else if (!emailRegex.test(email)) {
-      setEmailError('Invalid email format');
-      return false;
-    } else {
-      setEmailError('');
-      return true;
+  const updateFormData = (field: keyof ForgotPasswordFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear field error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
   const handleSendReset = async () => {
-    if (!validateEmail(email)) return;
+    // Validate form
+    const validationErrors = validateForgotPasswordForm(formData);
+    if (validationErrors.length > 0) {
+      const errorMap: Record<string, string> = {};
+      validationErrors.forEach(error => {
+        if (error.field) {
+          errorMap[error.field] = error.message;
+        }
+      });
+      setErrors(errorMap);
+      return;
+    }
 
-    setEmailError('');
+    // Clear previous errors
+    setErrors({});
     
-    const result = await resetPassword(email);
+    const result = await resetPassword(formData);
     
     if (result.success) {
       setCurrentStep(2);
       setResendTimer(60); // 60 seconds cooldown
-    } else {
-      setEmailError(result.error || 'Failed to send reset email');
+    } else if (result.error) {
+      if (result.error.field) {
+        setErrors({ [result.error.field]: result.error.message });
+      } else {
+        setErrors({ email: result.error.message });
+      }
     }
   };
 
-  const handleResendEmail = () => {
+  const handleResendEmail = async () => {
     if (resendTimer === 0) {
       setResendTimer(60);
-      console.log('Resending email...');
+      await resetPassword(formData);
     }
   };
 
@@ -100,24 +114,21 @@ export default function ForgotPasswordScreen() {
 
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Email</Text>
-        <View style={[styles.inputWrapper, emailError ? styles.inputError : null]}>
+        <View style={[styles.inputWrapper, errors.email ? styles.inputError : null]}>
           <Mail size={20} color="#9E9E9E" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Enter your email"
             placeholderTextColor="#BDBDBD"
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              if (emailError) validateEmail(text);
-            }}
-            onBlur={() => validateEmail(email)}
+            value={formData.email}
+            onChangeText={(text) => updateFormData('email', text)}
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
+            editable={!isLoading}
           />
         </View>
-        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+        {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
       </View>
 
       <TouchableOpacity
@@ -125,11 +136,9 @@ export default function ForgotPasswordScreen() {
         onPress={handleSendReset}
         disabled={isLoading}
       >
-        {isLoading ? (
-          <Text style={styles.primaryButtonText}>Sending...</Text>
-        ) : (
-          <Text style={styles.primaryButtonText}>Send Reset Link</Text>
-        )}
+        <Text style={styles.primaryButtonText}>
+          {isLoading ? 'Sending...' : 'Send Reset Link'}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -143,7 +152,7 @@ export default function ForgotPasswordScreen() {
       <Text style={styles.stepTitle}>Email Sent!</Text>
       <Text style={styles.stepSubtitle}>
         We've sent a password reset link to{'\n'}
-        <Text style={styles.emailHighlight}>{email}</Text>
+        <Text style={styles.emailHighlight}>{formData.email}</Text>
       </Text>
 
       <View style={styles.instructionContainer}>
@@ -183,7 +192,7 @@ export default function ForgotPasswordScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Link href="/(auth)/login" asChild>
-          <TouchableOpacity style={styles.backButton}>
+          <TouchableOpacity style={styles.backButton} disabled={isLoading}>
             <ChevronLeft size={24} color="#424242" />
           </TouchableOpacity>
         </Link>
@@ -208,7 +217,7 @@ export default function ForgotPasswordScreen() {
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>Remember your password? </Text>
             <Link href="/(auth)/login" asChild>
-              <TouchableOpacity>
+              <TouchableOpacity disabled={isLoading}>
                 <Text style={styles.loginLink}>Back to sign in</Text>
               </TouchableOpacity>
             </Link>
