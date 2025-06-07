@@ -1,9 +1,31 @@
 import React, { useEffect } from 'react';
-import { ScrollView, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, View, Text, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, Target, ChartBar as BarChart3, BookOpen, Bell, Settings, MessageCircle, FileText } from 'lucide-react-native';
 import { useFastingStore } from '@/stores/fasting';
 import { FastingType } from '@/types/fasting';
+
+// Fungsi helper untuk menghitung responsive width
+const getResponsiveActionItemWidth = () => {
+  const screenWidth = Dimensions.get('window').width;
+  const horizontalPadding = 48; // 24px x 2
+  const gap = 12;
+  const availableWidth = screenWidth - horizontalPadding;
+  
+  // Tentukan jumlah kolom berdasarkan lebar layar
+  let columns: number;
+  if (screenWidth < 350) {
+    columns = 3; // iPhone SE dan layar sangat kecil
+  } else {
+    columns = 4; // iPhone normal dan layar besar
+  }
+  
+  // Hitung width per item dengan mempertimbangkan gap
+  const totalGapWidth = (columns - 1) * gap;
+  const itemWidth = (availableWidth - totalGapWidth) / columns;
+  
+  return Math.floor(itemWidth);
+};
 
 export default function TodayScreen() {
   const {
@@ -491,7 +513,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   actionItem: {
-    width: '23%',
+    width: getResponsiveActionItemWidth(),
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 8,
