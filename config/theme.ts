@@ -1,4 +1,4 @@
-import { light, dark, mapping } from '@eva-design/eva';
+import { light, mapping } from '@eva-design/eva';
 
 // Minimalist color palette with white base
 const minimalistColors = {

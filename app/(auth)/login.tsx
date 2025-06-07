@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { Link } from 'expo-router';
+import { shadowPresets } from '@/utils/shadows';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -248,11 +249,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadowPresets.medium,
   },
   moonIcon: {
     fontSize: 24,
@@ -280,11 +277,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    elevation: 4,
+    ...shadowPresets.large,
     borderWidth: 1,
     borderColor: '#F5F5F5',
   },

@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 import { Card, Text, Button, Layout } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FastingType, TodayAnalysis } from '@/types/fasting';
+import { shadowPresets } from '@/utils/shadows';
 
 interface FocusCardProps {
   analysis: TodayAnalysis;
@@ -148,11 +149,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginVertical: 8,
     borderRadius: 16,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    ...shadowPresets.focus,
   },
   gradient: {
     borderRadius: 16,

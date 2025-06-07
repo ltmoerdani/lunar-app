@@ -15,13 +15,19 @@ export function useProtectedRoute() {
 
   useEffect(() => {
     // Pastikan navigation state sudah ready dan router sudah mounted
-    if (!navigationState?.key || !navigationState.stale) return;
+    if (!navigationState?.key || navigationState.stale) {
+      return;
+    }
     
     // Skip navigation saat masih loading auth state
-    if (isLoading) return;
+    if (isLoading) {
+      return;
+    }
 
     // Prevent multiple navigations
-    if (hasNavigated.current) return;
+    if (hasNavigated.current) {
+      return;
+    }
 
     const performNavigation = () => {
       try {

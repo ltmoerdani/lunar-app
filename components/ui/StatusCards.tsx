@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { Card, Text, Layout, ProgressBar } from '@ui-kitten/components';
 import { FastingStats } from '@/types/fasting';
+import { shadowPresets } from '@/utils/shadows';
 
 interface StatusCardsProps {
   stats: FastingStats;
@@ -125,11 +126,7 @@ const styles = StyleSheet.create({
     width: '48%',
     marginBottom: 12,
     borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    ...shadowPresets.card,
   },
   cardContent: {
     backgroundColor: 'transparent',

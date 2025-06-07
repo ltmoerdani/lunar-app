@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, Target, ChartBar as BarChart3, BookOpen, Bell, Settings, MessageCircle, FileText } from 'lucide-react-native';
 import { useFastingStore } from '@/stores/fasting';
 import { FastingType } from '@/types/fasting';
+import { shadowPresets } from '@/utils/shadows';
 
 // Fungsi helper untuk menghitung responsive width
 const getResponsiveActionItemWidth = () => {
@@ -321,11 +322,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    elevation: 4,
+    ...shadowPresets.large,
     borderWidth: 1,
     borderColor: '#F5F5F5',
   },
@@ -419,11 +416,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadowPresets.medium,
     borderWidth: 1,
     borderColor: '#F5F5F5',
   },
@@ -463,11 +456,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginRight: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadowPresets.medium,
     borderWidth: 1,
     borderColor: '#F5F5F5',
   },
@@ -519,11 +508,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadowPresets.medium,
     borderWidth: 1,
     borderColor: '#F5F5F5',
   },

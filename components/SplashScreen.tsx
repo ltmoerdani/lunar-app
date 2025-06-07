@@ -1,23 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import React, { useEffect, useState, useMemo } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withRepeat,
-  withSequence,
   interpolate,
   runOnJS,
 } from 'react-native-reanimated';
-
-const { width, height } = Dimensions.get('window');
+import { shadowPresets } from '@/utils/shadows';
 
 interface SplashScreenProps {
   onFinish: () => void;
 }
 
-export function SplashScreen({ onFinish }: SplashScreenProps) {
-  const [currentPhase, setCurrentPhase] = useState(0);
+export function SplashScreen({ onFinish }: Readonly<SplashScreenProps>) {
   const [loadingMessage, setLoadingMessage] = useState('');
   
   // Animation values
@@ -26,25 +22,24 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
   const progressValue = useSharedValue(0);
   const messageOpacity = useSharedValue(0);
 
-  // Loading messages
-  const loadingMessages = [
+  // Loading messages - memoized to prevent useEffect dependency issues
+  const loadingMessages = useMemo(() => [
     'Preparing your fasting journey...',
     'Loading Islamic calendar...',
     'Setting up your dashboard...',
     'Almost ready...',
-  ];
+  ], []);
 
   useEffect(() => {
-    // Phase 1: Logo appearance (0-1s)
-    logoOpacity.value = withTiming(1, { duration: 800 });
-    logoScale.value = withTiming(1, { duration: 800 });
+    // Helper function to handle completion animation
+    const handleCompletion = () => {
+      logoOpacity.value = withTiming(0, { duration: 500 });
+      messageOpacity.value = withTiming(0, { duration: 500 });
+      setTimeout(() => onFinish(), 500);
+    };
 
-    // Phase 2: Loading messages (1-3s)
-    const messageTimer = setTimeout(() => {
-      setCurrentPhase(1);
-      messageOpacity.value = withTiming(1, { duration: 500 });
-      
-      // Cycle through loading messages
+    // Helper function to cycle through messages
+    const cycleMessages = () => {
       let messageIndex = 0;
       const messageInterval = setInterval(() => {
         if (messageIndex < loadingMessages.length) {
@@ -53,22 +48,29 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
           messageIndex++;
         } else {
           clearInterval(messageInterval);
-          // Final phase: Completion
-          setTimeout(() => {
-            logoOpacity.value = withTiming(0, { duration: 500 });
-            messageOpacity.value = withTiming(0, { duration: 500 });
-            setTimeout(() => {
-              onFinish();
-            }, 500);
-          }, 800);
+          setTimeout(handleCompletion, 800);
         }
       }, 600);
+      return messageInterval;
+    };
+
+    // Phase 1: Logo appearance (0-1s)
+    logoOpacity.value = withTiming(1, { duration: 800 });
+    logoScale.value = withTiming(1, { duration: 800 });
+
+    // Phase 2: Loading messages (1-3s)
+    const messageTimer = setTimeout(() => {
+      messageOpacity.value = withTiming(1, { duration: 500 });
+      const messageInterval = cycleMessages();
+      
+      // Store interval for cleanup
+      return () => clearInterval(messageInterval);
     }, 1000);
 
     return () => {
       clearTimeout(messageTimer);
     };
-  }, []);
+  }, [loadingMessages, logoOpacity, logoScale, messageOpacity, onFinish, progressValue]);
 
   // Animated styles
   const logoAnimatedStyle = useAnimatedStyle(() => ({
@@ -151,11 +153,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadowPresets.medium,
   },
   moonIcon: {
     fontSize: 32,

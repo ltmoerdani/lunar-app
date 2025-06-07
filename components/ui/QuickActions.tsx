@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Pressable } from 'react-native';
 import { Text, Layout } from '@ui-kitten/components';
 import { Calendar, Target, ChartBar as BarChart3, BookOpen, Bell, Settings, MessageCircle, FileText } from 'lucide-react-native';
+import { shadowPresets } from '@/utils/shadows';
 
 interface QuickActionsProps {
   onActionPress: (action: string) => void;
@@ -121,11 +122,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 2,
+    ...shadowPresets.small,
   },
   iconContainer: {
     backgroundColor: '#F7F9FC',

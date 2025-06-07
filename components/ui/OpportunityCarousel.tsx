@@ -2,13 +2,14 @@ import React from 'react';
 import { StyleSheet, ScrollView } from 'react-native';
 import { Card, Text, Button, Layout } from '@ui-kitten/components';
 import { FastingOpportunity } from '@/types/fasting';
+import { shadowPresets } from '@/utils/shadows';
 
 interface OpportunityCarouselProps {
   opportunities: FastingOpportunity[];
   onQuickPlan: (opportunity: FastingOpportunity) => void;
 }
 
-export function OpportunityCarousel({ opportunities, onQuickPlan }: OpportunityCarouselProps) {
+export function OpportunityCarousel({ opportunities, onQuickPlan }: Readonly<OpportunityCarouselProps>) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return '#FF9800';
@@ -38,15 +39,15 @@ export function OpportunityCarousel({ opportunities, onQuickPlan }: OpportunityC
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {opportunities.map((opportunity, index) => (
-          <Card key={index} style={styles.card}>
+        {opportunities.map((opportunity) => (
+          <Card key={`${opportunity.date}-${opportunity.priority}`} style={styles.card}>
             <Layout style={styles.cardContent}>
               <Text category="s1" style={styles.dateText}>
                 {getPriorityIcon(opportunity.priority)} {opportunity.description.split(' - ')[1]}
               </Text>
               
               <Text category="h6" style={styles.titleText}>
-                {opportunity.specialEvent || opportunity.description.split(' - ')[0]}
+                {opportunity.specialEvent ?? opportunity.description.split(' - ')[0]}
               </Text>
               
               <Text category="p2" style={styles.successRate}>
@@ -121,11 +122,7 @@ const styles = StyleSheet.create({
     width: 140,
     marginRight: 12,
     borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    ...shadowPresets.card,
   },
   cardContent: {
     backgroundColor: 'transparent',

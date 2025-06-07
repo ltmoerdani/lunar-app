@@ -25,6 +25,8 @@ interface AuthState {
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
   completeOnboarding: () => void;
+  // Development utility
+  clearStorage: () => Promise<void>;
 }
 
 // Mock users database untuk development
@@ -197,6 +199,18 @@ export const useAuthStore = create<AuthState>()(
       completeOnboarding: () => {
         set({ hasCompletedOnboarding: true });
       },
+
+      // Development utility
+      clearStorage: async () => {
+        set({ 
+          user: null, 
+          isAuthenticated: false,
+          isLoading: false,
+          hasCompletedOnboarding: false
+        });
+        
+        await AsyncStorage.clear();
+      },
     }),
     {
       name: 'lunar-auth-storage',
@@ -212,21 +226,15 @@ export const useAuthStore = create<AuthState>()(
           await AsyncStorage.removeItem(name);
         },
       },
-      // Hanya persist data penting, tidak termasuk loading states
-      partialize: (state) => ({
+      // Hanya persist data penting, tidak termasuk loading states dan functions
+      partialize: (state: AuthState) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         hasCompletedOnboarding: state.hasCompletedOnboarding,
-        // Include functions as undefined to satisfy AuthState type
-        isLoading: false,
-        login: undefined as any,
-        register: undefined as any,
-        logout: undefined as any,
-        resetPassword: undefined as any,
-        setUser: undefined as any,
-        setLoading: undefined as any,
-        completeOnboarding: undefined as any,
       }),
+      onRehydrateStorage: () => (state: AuthState | undefined) => {
+        return state;
+      },
     }
   )
 );

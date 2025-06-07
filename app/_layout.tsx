@@ -52,7 +52,6 @@ export default function RootLayout() {
   
   const [fontsLoaded, fontError] = useFonts();
   const [showCustomSplash, setShowCustomSplash] = useState(true);
-  const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
@@ -62,10 +61,6 @@ export default function RootLayout() {
 
   const handleSplashFinish = () => {
     setShowCustomSplash(false);
-    // Small delay to ensure everything is mounted before starting navigation logic
-    setTimeout(() => {
-      setAppReady(true);
-    }, 100);
   };
 
   if (!fontsLoaded && !fontError) {
@@ -80,7 +75,7 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <>
         <IconRegistry icons={EvaIconsPack} />
-        {appReady ? <RootLayoutNavigator /> : null}
+        <RootLayoutNavigator />
       </>
     </QueryClientProvider>
   );
