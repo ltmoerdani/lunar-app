@@ -18,7 +18,7 @@ import Animated, {
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
 import { useAuthStore } from '@/stores/auth';
 import { validateLoginForm } from '@/utils/validation';
-import { LoginFormData, AuthError } from '@/types/auth';
+import { LoginFormData } from '@/types/auth';
 
 export default function LoginScreen() {
   const { signIn, signInWithGoogle, isLoading } = useAuthStore();
