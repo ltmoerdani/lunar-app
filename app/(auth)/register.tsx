@@ -74,7 +74,7 @@ export default function RegisterScreen() {
     cardOpacity.value = withTiming(1, { duration: 600 });
     cardTranslateY.value = withTiming(0, { duration: 600 });
     progressValue.value = withTiming(currentStep / 3, { duration: 500 });
-  }, [currentStep]);
+  }, [cardOpacity, cardTranslateY, currentStep, progressValue]);
 
   const validateStep1 = () => {
     const newErrors: FormErrors = {};

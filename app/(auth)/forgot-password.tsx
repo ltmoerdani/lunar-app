@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
-import { ChevronLeft, Mail, CircleCheck as CheckCircle, Clock } from 'lucide-react-native';
+import { ChevronLeft, Mail, CircleCheck as CheckCircle } from 'lucide-react-native';
 import { useAuthStore } from '@/stores/auth';
 
 export default function ForgotPasswordScreen() {
@@ -32,7 +32,7 @@ export default function ForgotPasswordScreen() {
     // Entrance animations
     cardOpacity.value = withTiming(1, { duration: 600 });
     cardTranslateY.value = withTiming(0, { duration: 600 });
-  }, [currentStep]);
+  }, [cardOpacity, cardTranslateY, currentStep]);
 
   useEffect(() => {
     // Resend timer

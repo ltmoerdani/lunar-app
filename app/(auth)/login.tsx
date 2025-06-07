@@ -34,7 +34,7 @@ export default function LoginScreen() {
     // Entrance animations
     cardOpacity.value = withTiming(1, { duration: 600 });
     cardTranslateY.value = withTiming(0, { duration: 600 });
-  }, []);
+  }, [cardOpacity, cardTranslateY]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

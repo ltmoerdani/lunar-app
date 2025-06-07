@@ -7,9 +7,6 @@ import { FastingType } from '@/types/fasting';
 
 export default function TodayScreen() {
   const {
-    stats,
-    todayAnalysis,
-    opportunities,
     loadTodayAnalysis,
     loadOpportunities,
     calculateStats,
@@ -432,10 +429,10 @@ const styles = StyleSheet.create({
     color: '#52C4A0',
   },
   opportunitiesSection: {
+    paddingHorizontal: 24,
     marginBottom: 24,
   },
   opportunitiesScroll: {
-    paddingLeft: 24,
     paddingRight: 12,
   },
   opportunityCard: {
