@@ -1,7 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Icon } from '@ui-kitten/components';
-import { Calendar, Target, ChartBar as BarChart3, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
+import { Calendar, Target, ChartBar as BarChart3, MoveHorizontal as MoreHorizontal, Chrome as Home } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Define types for tab icon props
@@ -12,7 +11,7 @@ type TabIconProps = {
 
 // Extracted tab icon components for better performance
 const TodayTabIcon = React.memo(({ color, size }: TabIconProps) => (
-  <Icon name="moon-outline" fill={color} style={{ width: size, height: size }} />
+  <Home color={color} size={size} />
 ));
 
 const CalendarTabIcon = React.memo(({ color, size }: TabIconProps) => (
@@ -38,7 +37,7 @@ PlanningTabIcon.displayName = 'PlanningTabIcon';
 ProgressTabIcon.displayName = 'ProgressTabIcon';
 MoreTabIcon.displayName = 'MoreTabIcon';
 
-// Wrapper functions for React Navigation tabBarIcon prop - extracted to avoid inline functions
+// Wrapper functions for React Navigation tabBarIcon prop
 const renderTodayIcon = ({ color, size }: TabIconProps) => (
   <TodayTabIcon color={color} size={size} />
 );
@@ -66,19 +65,24 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#26A69A',
-        tabBarInactiveTintColor: '#8F9BB3',
+        tabBarActiveTintColor: '#52C4A0',
+        tabBarInactiveTintColor: '#9E9E9E',
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
-          borderTopColor: '#E4E9F2',
+          borderTopColor: '#F5F5F5',
           height: 60 + insets.bottom,
           paddingBottom: insets.bottom,
           paddingTop: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.04,
+          shadowRadius: 8,
+          elevation: 8,
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontFamily: 'Poppins-Medium',
+          fontFamily: 'Inter-Medium',
           marginBottom: 4,
         },
         tabBarIconStyle: {

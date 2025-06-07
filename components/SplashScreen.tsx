@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -24,69 +23,23 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
   // Animation values
   const logoOpacity = useSharedValue(0);
   const logoScale = useSharedValue(0.8);
-  const moonGlow = useSharedValue(0);
   const progressValue = useSharedValue(0);
   const messageOpacity = useSharedValue(0);
-  const backgroundOpacity = useSharedValue(0);
 
-  // Get time-based greeting
-  const getTimeBasedGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour >= 4 && hour < 11) {
-      return {
-        greeting: '🌅 Subuh barokah, semangat sahur!',
-        message: '🌙 Menyiapkan niat puasa hari ini...'
-      };
-    } else if (hour >= 11 && hour < 15) {
-      return {
-        greeting: '☀️ Semangat menjalani puasa!',
-        message: '💪 Setengah perjalanan telah dilalui'
-      };
-    } else if (hour >= 15 && hour < 18) {
-      return {
-        greeting: '🌇 Sebentar lagi maghrib!',
-        message: '🤲 Menyiapkan doa berbuka puasa...'
-      };
-    } else {
-      return {
-        greeting: '🌙 Alhamdulillah puasa hari ini',
-        message: '📅 Menyiapkan planning puasa besok...'
-      };
-    }
-  };
-
-  // Loading messages for different phases
+  // Loading messages
   const loadingMessages = [
-    '🌙 Menyiapkan kalender puasa Hijriah...',
-    '📅 Memuat jadwal puasa sunnah...',
-    '⭐ Menganalisa opportunity Ayyamul Bidh...',
-    '🤲 Menyiapkan guidance puasa personal...',
-    '🎯 Memuat planning puasa optimal...',
-    '📊 Memuat progress puasa Anda...',
-    '✨ Siap memulai journey puasa cerdas'
-  ];
-
-  // Personal messages (mock - in real app would be based on user data)
-  const personalMessages = [
-    '🌙 Selamat datang kembali, mujahid puasa',
-    '🔥 Streak puasa: 2 hari masya Allah!',
-    '💪 Menyiapkan planning optimal...'
+    'Preparing your fasting journey...',
+    'Loading Islamic calendar...',
+    'Setting up your dashboard...',
+    'Almost ready...',
   ];
 
   useEffect(() => {
-    // Phase 1: Logo appearance (0-1.5s)
+    // Phase 1: Logo appearance (0-1s)
     logoOpacity.value = withTiming(1, { duration: 800 });
     logoScale.value = withTiming(1, { duration: 800 });
-    moonGlow.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 1500 }),
-        withTiming(0.6, { duration: 1500 })
-      ),
-      -1,
-      true
-    );
 
-    // Phase 2: Loading messages (1.5-4s)
+    // Phase 2: Loading messages (1-3s)
     const messageTimer = setTimeout(() => {
       setCurrentPhase(1);
       messageOpacity.value = withTiming(1, { duration: 500 });
@@ -100,38 +53,17 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
           messageIndex++;
         } else {
           clearInterval(messageInterval);
-          // Phase 3: Personal messages
+          // Final phase: Completion
           setTimeout(() => {
-            setCurrentPhase(2);
-            let personalIndex = 0;
-            const personalInterval = setInterval(() => {
-              if (personalIndex < personalMessages.length) {
-                runOnJS(setLoadingMessage)(personalMessages[personalIndex]);
-                personalIndex++;
-              } else {
-                clearInterval(personalInterval);
-                // Final phase: Completion
-                setTimeout(() => {
-                  const timeGreeting = getTimeBasedGreeting();
-                  runOnJS(setLoadingMessage)(timeGreeting.greeting);
-                  setTimeout(() => {
-                    runOnJS(setLoadingMessage)('🤲 Barakallahu fiikum');
-                    setTimeout(() => {
-                      backgroundOpacity.value = withTiming(0, { duration: 800 });
-                      logoOpacity.value = withTiming(0, { duration: 800 });
-                      messageOpacity.value = withTiming(0, { duration: 800 });
-                      setTimeout(() => {
-                        onFinish();
-                      }, 800);
-                    }, 1000);
-                  }, 800);
-                }, 800);
-              }
-            }, 800);
-          }, 500);
+            logoOpacity.value = withTiming(0, { duration: 500 });
+            messageOpacity.value = withTiming(0, { duration: 500 });
+            setTimeout(() => {
+              onFinish();
+            }, 500);
+          }, 800);
         }
       }, 600);
-    }, 1500);
+    }, 1000);
 
     return () => {
       clearTimeout(messageTimer);
@@ -144,10 +76,6 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
     transform: [{ scale: logoScale.value }],
   }));
 
-  const moonGlowStyle = useAnimatedStyle(() => ({
-    opacity: moonGlow.value,
-  }));
-
   const progressStyle = useAnimatedStyle(() => ({
     width: `${interpolate(progressValue.value, [0, 1], [0, 100])}%`,
   }));
@@ -156,31 +84,13 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
     opacity: messageOpacity.value,
   }));
 
-  const backgroundAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: backgroundOpacity.value,
-  }));
-
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#1a4a5c', '#26A69A', '#4a90b8']}
-        style={styles.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-      
-      {/* Islamic geometric pattern overlay */}
-      <Animated.View style={[styles.patternOverlay, backgroundAnimatedStyle]}>
-        <View style={styles.geometricPattern} />
-      </Animated.View>
-
       {/* Main content */}
       <View style={styles.content}>
         {/* Logo section */}
         <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
-          {/* Moon with glow effect */}
-          <View style={styles.moonContainer}>
-            <Animated.View style={[styles.moonGlow, moonGlowStyle]} />
+          <View style={styles.iconContainer}>
             <Text style={styles.moonIcon}>🌙</Text>
           </View>
           
@@ -203,31 +113,12 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
           </Animated.View>
         </View>
 
-        {/* Spiritual quote */}
+        {/* Bottom quote */}
         <View style={styles.quoteContainer}>
           <Text style={styles.quote}>
-            "وَأَن تَصُومُوا خَيْرٌ لَّكُمْ إِن كُنتُمْ تَعْلَمُونَ"
-          </Text>
-          <Text style={styles.quoteTranslation}>
-            "Dan berpuasa itu lebih baik bagimu jika kamu mengetahui"
+            "And fasting is better for you, if you only knew"
           </Text>
         </View>
-      </View>
-
-      {/* Floating particles effect */}
-      <View style={styles.particlesContainer}>
-        {[...Array(6)].map((_, index) => (
-          <Animated.View
-            key={index}
-            style={[
-              styles.particle,
-              {
-                left: `${20 + index * 12}%`,
-                animationDelay: `${index * 0.5}s`,
-              },
-            ]}
-          />
-        ))}
       </View>
     </View>
   );
@@ -236,28 +127,9 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  gradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-  },
-  patternOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    opacity: 0.1,
-  },
-  geometricPattern: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    // Add subtle Islamic geometric pattern here if needed
   },
   content: {
     flex: 1,
@@ -265,50 +137,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 80,
     paddingHorizontal: 40,
+    width: '100%',
   },
   logoContainer: {
     alignItems: 'center',
     marginTop: 60,
   },
-  moonContainer: {
-    position: 'relative',
-    marginBottom: 20,
-  },
-  moonGlow: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#d4af37',
-    top: -35,
-    left: -35,
-    shadowColor: '#d4af37',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
-    elevation: 20,
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F8FFFE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   moonIcon: {
-    fontSize: 50,
+    fontSize: 32,
     textAlign: 'center',
   },
   appName: {
-    fontSize: 36,
-    fontFamily: 'Poppins-Bold',
-    color: '#FFFFFF',
+    fontSize: 32,
+    fontFamily: 'Inter-Bold',
+    color: '#212121',
     textAlign: 'center',
     marginBottom: 8,
-    letterSpacing: 3,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    letterSpacing: 2,
   },
   tagline: {
     fontSize: 16,
-    fontFamily: 'Poppins-Medium',
-    color: '#E8F5E8',
+    fontFamily: 'Inter-Medium',
+    color: '#757575',
     textAlign: 'center',
-    opacity: 0.9,
   },
   loadingContainer: {
     width: '100%',
@@ -316,76 +181,39 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     width: '80%',
-    marginBottom: 30,
+    marginBottom: 24,
   },
   progressTrack: {
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 2,
+    height: 2,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 1,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#d4af37',
-    borderRadius: 2,
-    shadowColor: '#d4af37',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-    elevation: 4,
+    backgroundColor: '#52C4A0',
+    borderRadius: 1,
   },
   messageContainer: {
-    minHeight: 50,
+    minHeight: 40,
     justifyContent: 'center',
   },
   loadingMessage: {
-    fontSize: 16,
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#9E9E9E',
     textAlign: 'center',
-    lineHeight: 24,
-    opacity: 0.95,
+    lineHeight: 20,
   },
   quoteContainer: {
     alignItems: 'center',
     paddingHorizontal: 20,
   },
   quote: {
-    fontSize: 18,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#d4af37',
-    textAlign: 'center',
-    marginBottom: 8,
-    lineHeight: 28,
-  },
-  quoteTranslation: {
     fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#E8F5E8',
+    fontFamily: 'Inter-Medium',
+    color: '#BDBDBD',
     textAlign: 'center',
-    opacity: 0.8,
     fontStyle: 'italic',
-  },
-  particlesContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    pointerEvents: 'none',
-  },
-  particle: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    backgroundColor: '#d4af37',
-    borderRadius: 2,
-    opacity: 0.6,
-    top: '20%',
-    shadowColor: '#d4af37',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-    elevation: 4,
   },
 });

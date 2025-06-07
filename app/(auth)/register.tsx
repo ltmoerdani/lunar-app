@@ -7,7 +7,6 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
 import Animated, {
   useSharedValue,
@@ -25,7 +24,6 @@ interface FormData {
   password: string;
   confirmPassword: string;
   madhab: string;
-  language: string;
   acceptTerms: boolean;
 }
 
@@ -53,7 +51,6 @@ export default function RegisterScreen() {
     password: '',
     confirmPassword: '',
     madhab: '',
-    language: 'id',
     acceptTerms: false,
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -63,44 +60,43 @@ export default function RegisterScreen() {
   // Animation values
   const progressValue = useSharedValue(0);
   const cardOpacity = useSharedValue(0);
-  const cardTranslateY = useSharedValue(50);
+  const cardTranslateY = useSharedValue(30);
 
   const madhabOptions: MadhabOption[] = [
-    { id: 'hanafi', name: 'Hanafi', description: 'Mazhab Imam Abu Hanifah' },
-    { id: 'shafii', name: 'Syafi\'i', description: 'Mazhab Imam Syafi\'i' },
-    { id: 'maliki', name: 'Maliki', description: 'Mazhab Imam Malik' },
-    { id: 'hanbali', name: 'Hanbali', description: 'Mazhab Imam Ahmad' },
+    { id: 'hanafi', name: 'Hanafi', description: 'School of Imam Abu Hanifah' },
+    { id: 'shafii', name: 'Shafi\'i', description: 'School of Imam Shafi\'i' },
+    { id: 'maliki', name: 'Maliki', description: 'School of Imam Malik' },
+    { id: 'hanbali', name: 'Hanbali', description: 'School of Imam Ahmad' },
   ];
 
   useEffect(() => {
     // Entrance animations
-    cardOpacity.value = withTiming(1, { duration: 800 });
-    cardTranslateY.value = withTiming(0, { duration: 800 });
+    cardOpacity.value = withTiming(1, { duration: 600 });
+    cardTranslateY.value = withTiming(0, { duration: 600 });
     progressValue.value = withTiming(currentStep / 3, { duration: 500 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep]);
 
   const validateStep1 = () => {
     const newErrors: FormErrors = {};
     
     if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Nama lengkap harus diisi';
+      newErrors.fullName = 'Full name is required';
     }
     
     if (!formData.email.trim()) {
-      newErrors.email = 'Email harus diisi';
+      newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Format email tidak valid';
+      newErrors.email = 'Invalid email format';
     }
     
     if (!formData.password) {
-      newErrors.password = 'Password harus diisi';
+      newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password minimal 6 karakter';
+      newErrors.password = 'Password must be at least 6 characters';
     }
     
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Konfirmasi password tidak cocok';
+      newErrors.confirmPassword = 'Passwords do not match';
     }
     
     setErrors(newErrors);
@@ -111,7 +107,7 @@ export default function RegisterScreen() {
     const newErrors: FormErrors = {};
     
     if (!formData.madhab) {
-      newErrors.madhab = 'Pilih mazhab yang Anda ikuti';
+      newErrors.madhab = 'Please select your madhab';
     }
     
     setErrors(newErrors);
@@ -122,7 +118,7 @@ export default function RegisterScreen() {
     const newErrors: FormErrors = {};
     
     if (!formData.acceptTerms) {
-      newErrors.acceptTerms = 'Anda harus menyetujui syarat dan ketentuan';
+      newErrors.acceptTerms = 'You must accept the terms and conditions';
     }
     
     setErrors(newErrors);
@@ -160,14 +156,11 @@ export default function RegisterScreen() {
   };
 
   const handleRegister = async () => {
-    // Use auth store register method
     const result = await register(formData.email, formData.password, formData.fullName);
     
     if (!result.success) {
-      // Error handling could be improved by showing user feedback
       console.warn('Registration failed:', result.error);
     }
-    // Navigation akan dihandle otomatis oleh useProtectedRoute hook
   };
 
   const updateFormData = (field: keyof FormData, value: string | boolean) => {
@@ -190,17 +183,18 @@ export default function RegisterScreen() {
 
   const renderStep1 = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Informasi Dasar</Text>
-      <Text style={styles.stepSubtitle}>Masukkan data diri Anda</Text>
+      <Text style={styles.stepTitle}>Basic Information</Text>
+      <Text style={styles.stepSubtitle}>Enter your personal details</Text>
 
       {/* Full Name */}
       <View style={styles.inputContainer}>
-        <View style={styles.inputWrapper}>
-          <User size={20} color="#8F9BB3" style={styles.inputIcon} />
+        <Text style={styles.inputLabel}>Full Name</Text>
+        <View style={[styles.inputWrapper, errors.fullName ? styles.inputError : null]}>
+          <User size={20} color="#9E9E9E" style={styles.inputIcon} />
           <TextInput
-            style={[styles.input, errors.fullName ? styles.inputError : null]}
-            placeholder="Nama Lengkap"
-            placeholderTextColor="#8F9BB3"
+            style={styles.input}
+            placeholder="Enter your full name"
+            placeholderTextColor="#BDBDBD"
             value={formData.fullName}
             onChangeText={(text) => updateFormData('fullName', text)}
             autoCapitalize="words"
@@ -211,12 +205,13 @@ export default function RegisterScreen() {
 
       {/* Email */}
       <View style={styles.inputContainer}>
-        <View style={styles.inputWrapper}>
-          <Mail size={20} color="#8F9BB3" style={styles.inputIcon} />
+        <Text style={styles.inputLabel}>Email</Text>
+        <View style={[styles.inputWrapper, errors.email ? styles.inputError : null]}>
+          <Mail size={20} color="#9E9E9E" style={styles.inputIcon} />
           <TextInput
-            style={[styles.input, errors.email ? styles.inputError : null]}
-            placeholder="Email"
-            placeholderTextColor="#8F9BB3"
+            style={styles.input}
+            placeholder="Enter your email"
+            placeholderTextColor="#BDBDBD"
             value={formData.email}
             onChangeText={(text) => updateFormData('email', text)}
             keyboardType="email-address"
@@ -229,12 +224,13 @@ export default function RegisterScreen() {
 
       {/* Password */}
       <View style={styles.inputContainer}>
-        <View style={styles.inputWrapper}>
-          <Lock size={20} color="#8F9BB3" style={styles.inputIcon} />
+        <Text style={styles.inputLabel}>Password</Text>
+        <View style={[styles.inputWrapper, errors.password ? styles.inputError : null]}>
+          <Lock size={20} color="#9E9E9E" style={styles.inputIcon} />
           <TextInput
-            style={[styles.input, errors.password ? styles.inputError : null]}
-            placeholder="Password"
-            placeholderTextColor="#8F9BB3"
+            style={styles.input}
+            placeholder="Enter your password"
+            placeholderTextColor="#BDBDBD"
             value={formData.password}
             onChangeText={(text) => updateFormData('password', text)}
             secureTextEntry={!showPassword}
@@ -245,9 +241,9 @@ export default function RegisterScreen() {
             onPress={() => setShowPassword(!showPassword)}
           >
             {showPassword ? (
-              <EyeOff size={20} color="#8F9BB3" />
+              <EyeOff size={20} color="#9E9E9E" />
             ) : (
-              <Eye size={20} color="#8F9BB3" />
+              <Eye size={20} color="#9E9E9E" />
             )}
           </TouchableOpacity>
         </View>
@@ -256,12 +252,13 @@ export default function RegisterScreen() {
 
       {/* Confirm Password */}
       <View style={styles.inputContainer}>
-        <View style={styles.inputWrapper}>
-          <Lock size={20} color="#8F9BB3" style={styles.inputIcon} />
+        <Text style={styles.inputLabel}>Confirm Password</Text>
+        <View style={[styles.inputWrapper, errors.confirmPassword ? styles.inputError : null]}>
+          <Lock size={20} color="#9E9E9E" style={styles.inputIcon} />
           <TextInput
-            style={[styles.input, errors.confirmPassword ? styles.inputError : null]}
-            placeholder="Konfirmasi Password"
-            placeholderTextColor="#8F9BB3"
+            style={styles.input}
+            placeholder="Confirm your password"
+            placeholderTextColor="#BDBDBD"
             value={formData.confirmPassword}
             onChangeText={(text) => updateFormData('confirmPassword', text)}
             secureTextEntry={!showConfirmPassword}
@@ -271,9 +268,9 @@ export default function RegisterScreen() {
             onPress={() => setShowConfirmPassword(!showConfirmPassword)}
           >
             {showConfirmPassword ? (
-              <EyeOff size={20} color="#8F9BB3" />
+              <EyeOff size={20} color="#9E9E9E" />
             ) : (
-              <Eye size={20} color="#8F9BB3" />
+              <Eye size={20} color="#9E9E9E" />
             )}
           </TouchableOpacity>
         </View>
@@ -284,8 +281,8 @@ export default function RegisterScreen() {
 
   const renderStep2 = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Preferensi Islami</Text>
-      <Text style={styles.stepSubtitle}>Pilih mazhab yang Anda ikuti</Text>
+      <Text style={styles.stepTitle}>Islamic Preferences</Text>
+      <Text style={styles.stepSubtitle}>Select your madhab</Text>
 
       <View style={styles.madhabContainer}>
         {madhabOptions.map((madhab) => (
@@ -326,12 +323,12 @@ export default function RegisterScreen() {
 
   const renderStep3 = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Konfirmasi</Text>
-      <Text style={styles.stepSubtitle}>Tinjau informasi Anda</Text>
+      <Text style={styles.stepTitle}>Confirmation</Text>
+      <Text style={styles.stepSubtitle}>Review your information</Text>
 
       <View style={styles.summaryContainer}>
         <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Nama:</Text>
+          <Text style={styles.summaryLabel}>Name:</Text>
           <Text style={styles.summaryValue}>{formData.fullName}</Text>
         </View>
         <View style={styles.summaryItem}>
@@ -339,7 +336,7 @@ export default function RegisterScreen() {
           <Text style={styles.summaryValue}>{formData.email}</Text>
         </View>
         <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Mazhab:</Text>
+          <Text style={styles.summaryLabel}>Madhab:</Text>
           <Text style={styles.summaryValue}>
             {madhabOptions.find(m => m.id === formData.madhab)?.name}
           </Text>
@@ -354,10 +351,10 @@ export default function RegisterScreen() {
           {formData.acceptTerms && <Text style={styles.checkmark}>✓</Text>}
         </View>
         <Text style={styles.termsText}>
-          Saya menyetujui{' '}
-          <Text style={styles.termsLink}>Syarat & Ketentuan</Text>
-          {' '}dan{' '}
-          <Text style={styles.termsLink}>Kebijakan Privasi</Text>
+          I agree to the{' '}
+          <Text style={styles.termsLink}>Terms & Conditions</Text>
+          {' '}and{' '}
+          <Text style={styles.termsLink}>Privacy Policy</Text>
         </Text>
       </TouchableOpacity>
       
@@ -367,24 +364,17 @@ export default function RegisterScreen() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <LinearGradient
-        colors={['#1a365d', '#2d5a87', '#26A69A']}
-        style={styles.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-
       {/* Header */}
       <View style={styles.header}>
         <Link href="/(auth)/login" asChild>
           <TouchableOpacity style={styles.backButton}>
-            <ChevronLeft size={24} color="#FFFFFF" />
+            <ChevronLeft size={24} color="#424242" />
           </TouchableOpacity>
         </Link>
         
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Daftar Akun</Text>
-          <Text style={styles.headerSubtitle}>Bergabung dengan komunitas puasa</Text>
+          <Text style={styles.headerTitle}>Create Account</Text>
+          <Text style={styles.headerSubtitle}>Join the fasting community</Text>
         </View>
       </View>
 
@@ -393,7 +383,7 @@ export default function RegisterScreen() {
         <View style={styles.progressTrack}>
           <Animated.View style={[styles.progressFill, progressStyle]} />
         </View>
-        <Text style={styles.progressText}>Langkah {currentStep} dari 3</Text>
+        <Text style={styles.progressText}>Step {currentStep} of 3</Text>
       </View>
 
       {/* Form */}
@@ -407,7 +397,7 @@ export default function RegisterScreen() {
           <View style={styles.navigationContainer}>
             {currentStep > 1 && (
               <TouchableOpacity style={styles.backNavButton} onPress={handleBack}>
-                <Text style={styles.backNavButtonText}>Kembali</Text>
+                <Text style={styles.backNavButtonText}>Back</Text>
               </TouchableOpacity>
             )}
             
@@ -416,23 +406,13 @@ export default function RegisterScreen() {
               onPress={handleNext}
               disabled={isLoading}
             >
-              <LinearGradient
-                colors={['#26A69A', '#00897B']}
-                style={styles.nextButtonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                {isLoading ? (
-                  <View style={styles.loadingContainer}>
-                    <View style={styles.loadingSpinner} />
-                    <Text style={styles.nextButtonText}>Mendaftar...</Text>
-                  </View>
-                ) : (
-                  <Text style={styles.nextButtonText}>
-                    {currentStep === 3 ? 'DAFTAR' : 'LANJUT'}
-                  </Text>
-                )}
-              </LinearGradient>
+              {isLoading ? (
+                <Text style={styles.nextButtonText}>Creating...</Text>
+              ) : (
+                <Text style={styles.nextButtonText}>
+                  {currentStep === 3 ? 'Create Account' : 'Next'}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -441,10 +421,10 @@ export default function RegisterScreen() {
       {/* Footer */}
       <View style={styles.footer}>
         <View style={styles.loginContainer}>
-          <Text style={styles.loginText}>Sudah punya akun? </Text>
+          <Text style={styles.loginText}>Already have an account? </Text>
           <Link href="/(auth)/login" asChild>
             <TouchableOpacity>
-              <Text style={styles.loginLink}>Masuk sekarang</Text>
+              <Text style={styles.loginLink}>Sign in</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -456,115 +436,114 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  gradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingTop: 60,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingBottom: 20,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#FAFAFA',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   headerContent: {
     flex: 1,
   },
   headerTitle: {
     fontSize: 24,
-    fontFamily: 'Poppins-Bold',
-    color: '#FFFFFF',
+    fontFamily: 'Inter-Bold',
+    color: '#212121',
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#E8F5E8',
-    opacity: 0.8,
+    fontFamily: 'Inter-Regular',
+    color: '#757575',
   },
   progressContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     marginBottom: 20,
   },
   progressTrack: {
     height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#F5F5F5',
     borderRadius: 2,
     overflow: 'hidden',
     marginBottom: 8,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#d4af37',
+    backgroundColor: '#52C4A0',
     borderRadius: 2,
   },
   progressText: {
     fontSize: 12,
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    fontFamily: 'Inter-Medium',
+    color: '#9E9E9E',
     textAlign: 'center',
-    opacity: 0.8,
   },
   formContainer: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingBottom: 40,
   },
   formCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     padding: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 25 },
-    shadowOpacity: 0.1,
-    shadowRadius: 45,
-    elevation: 20,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#F5F5F5',
   },
   stepContainer: {
     marginBottom: 24,
   },
   stepTitle: {
     fontSize: 20,
-    fontFamily: 'Poppins-Bold',
-    color: '#FFFFFF',
+    fontFamily: 'Inter-Bold',
+    color: '#212121',
     textAlign: 'center',
     marginBottom: 8,
   },
   stepSubtitle: {
     fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#E8F5E8',
+    fontFamily: 'Inter-Regular',
+    color: '#757575',
     textAlign: 'center',
     marginBottom: 24,
-    opacity: 0.8,
   },
   inputContainer: {
     marginBottom: 20,
   },
+  inputLabel: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#424242',
+    marginBottom: 8,
+  },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 16,
+    backgroundColor: '#FAFAFA',
+    borderRadius: 8,
     paddingHorizontal: 16,
-    height: 56,
+    height: 48,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#E0E0E0',
   },
   inputIcon: {
     marginRight: 12,
@@ -572,37 +551,36 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    fontFamily: 'Poppins-Regular',
-    color: '#1A2138',
+    fontFamily: 'Inter-Regular',
+    color: '#212121',
   },
   inputError: {
     borderColor: '#F44336',
-    borderWidth: 2,
+    backgroundColor: '#FFEBEE',
   },
   eyeIcon: {
     padding: 4,
   },
   errorText: {
     fontSize: 12,
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Inter-Regular',
     color: '#F44336',
     marginTop: 4,
-    marginLeft: 16,
   },
   madhabContainer: {
     marginBottom: 20,
   },
   madhabCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
+    backgroundColor: '#FAFAFA',
+    borderRadius: 8,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: '#E0E0E0',
   },
   madhabCardSelected: {
-    backgroundColor: 'rgba(212, 175, 55, 0.2)',
-    borderColor: '#d4af37',
+    backgroundColor: '#F1F8E9',
+    borderColor: '#52C4A0',
     borderWidth: 2,
   },
   madhabHeader: {
@@ -613,29 +591,27 @@ const styles = StyleSheet.create({
   },
   madhabName: {
     fontSize: 16,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#FFFFFF',
+    fontFamily: 'Inter-SemiBold',
+    color: '#212121',
   },
   madhabNameSelected: {
-    color: '#d4af37',
+    color: '#52C4A0',
   },
   selectedIndicator: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#d4af37',
+    backgroundColor: '#52C4A0',
     justifyContent: 'center',
     alignItems: 'center',
   },
   madhabDescription: {
     fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#E8F5E8',
-    opacity: 0.8,
+    fontFamily: 'Inter-Regular',
+    color: '#757575',
   },
   madhabDescriptionSelected: {
-    color: '#FFFFFF',
-    opacity: 1,
+    color: '#424242',
   },
   summaryContainer: {
     marginBottom: 24,
@@ -646,18 +622,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: '#F5F5F5',
   },
   summaryLabel: {
     fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#E8F5E8',
-    opacity: 0.8,
+    fontFamily: 'Inter-Medium',
+    color: '#757575',
   },
   summaryValue: {
     fontSize: 14,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#FFFFFF',
+    fontFamily: 'Inter-SemiBold',
+    color: '#212121',
   },
   termsContainer: {
     flexDirection: 'row',
@@ -669,31 +644,31 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
     marginRight: 12,
     marginTop: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxChecked: {
-    backgroundColor: '#26A69A',
-    borderColor: '#26A69A',
+    backgroundColor: '#52C4A0',
+    borderColor: '#52C4A0',
   },
   checkmark: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontFamily: 'Poppins-Bold',
+    fontFamily: 'Inter-Bold',
   },
   termsText: {
     flex: 1,
     fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#FFFFFF',
+    fontFamily: 'Inter-Regular',
+    color: '#424242',
     lineHeight: 20,
   },
   termsLink: {
-    color: '#d4af37',
-    fontFamily: 'Poppins-SemiBold',
+    color: '#52C4A0',
+    fontFamily: 'Inter-SemiBold',
   },
   navigationContainer: {
     flexDirection: 'row',
@@ -702,55 +677,39 @@ const styles = StyleSheet.create({
   },
   backNavButton: {
     flex: 1,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: '#FAFAFA',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#E0E0E0',
   },
   backNavButtonText: {
     fontSize: 16,
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
+    fontFamily: 'Inter-Medium',
+    color: '#424242',
   },
   nextButton: {
     flex: 2,
-    borderRadius: 16,
-    overflow: 'hidden',
+    backgroundColor: '#52C4A0',
+    borderRadius: 8,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   nextButtonFull: {
     flex: 1,
     marginRight: 0,
   },
-  nextButtonGradient: {
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   nextButtonText: {
     fontSize: 16,
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Inter-SemiBold',
     color: '#FFFFFF',
-    letterSpacing: 1,
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  loadingSpinner: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    borderTopColor: 'transparent',
-    marginRight: 8,
   },
   footer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingBottom: 40,
     alignItems: 'center',
   },
@@ -760,13 +719,12 @@ const styles = StyleSheet.create({
   },
   loginText: {
     fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#FFFFFF',
-    opacity: 0.8,
+    fontFamily: 'Inter-Regular',
+    color: '#757575',
   },
   loginLink: {
     fontSize: 14,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#d4af37',
+    fontFamily: 'Inter-SemiBold',
+    color: '#52C4A0',
   },
 });

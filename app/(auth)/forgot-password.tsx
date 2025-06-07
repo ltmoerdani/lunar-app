@@ -7,16 +7,13 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withRepeat,
-  withSequence,
 } from 'react-native-reanimated';
-import { ChevronLeft, Mail, Lock, CircleCheck as CheckCircle, Clock } from 'lucide-react-native';
+import { ChevronLeft, Mail, CircleCheck as CheckCircle, Clock } from 'lucide-react-native';
 import { useAuthStore } from '@/stores/auth';
 
 export default function ForgotPasswordScreen() {
@@ -24,38 +21,17 @@ export default function ForgotPasswordScreen() {
   const { resetPassword, isLoading } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
 
   // Animation values
   const cardOpacity = useSharedValue(0);
-  const cardTranslateY = useSharedValue(50);
-  const iconScale = useSharedValue(0.8);
-  const iconOpacity = useSharedValue(0);
-  const pulseAnimation = useSharedValue(1);
+  const cardTranslateY = useSharedValue(30);
 
   useEffect(() => {
     // Entrance animations
-    cardOpacity.value = withTiming(1, { duration: 800 });
-    cardTranslateY.value = withTiming(0, { duration: 800 });
-    iconOpacity.value = withTiming(1, { duration: 1000 });
-    iconScale.value = withTiming(1, { duration: 1000 });
-
-    // Pulse animation for waiting state
-    if (currentStep === 2) {
-      pulseAnimation.value = withRepeat(
-        withSequence(
-          withTiming(1.1, { duration: 1000 }),
-          withTiming(1, { duration: 1000 })
-        ),
-        -1,
-        true
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    cardOpacity.value = withTiming(1, { duration: 600 });
+    cardTranslateY.value = withTiming(0, { duration: 600 });
   }, [currentStep]);
 
   useEffect(() => {
@@ -71,29 +47,13 @@ export default function ForgotPasswordScreen() {
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email) {
-      setEmailError('Email harus diisi');
+      setEmailError('Email is required');
       return false;
     } else if (!emailRegex.test(email)) {
-      setEmailError('Format email tidak valid');
+      setEmailError('Invalid email format');
       return false;
     } else {
       setEmailError('');
-      return true;
-    }
-  };
-
-  const validatePasswords = () => {
-    if (!newPassword) {
-      setPasswordError('Password baru harus diisi');
-      return false;
-    } else if (newPassword.length < 6) {
-      setPasswordError('Password minimal 6 karakter');
-      return false;
-    } else if (newPassword !== confirmPassword) {
-      setPasswordError('Konfirmasi password tidak cocok');
-      return false;
-    } else {
-      setPasswordError('');
       return true;
     }
   };
@@ -103,35 +63,21 @@ export default function ForgotPasswordScreen() {
 
     setEmailError('');
     
-    // Use auth store reset password method
     const result = await resetPassword(email);
     
     if (result.success) {
       setCurrentStep(2);
       setResendTimer(60); // 60 seconds cooldown
     } else {
-      setEmailError(result.error || 'Gagal mengirim email reset');
+      setEmailError(result.error || 'Failed to send reset email');
     }
   };
 
   const handleResendEmail = () => {
     if (resendTimer === 0) {
       setResendTimer(60);
-      // Simulate resending email
       console.log('Resending email...');
     }
-  };
-
-  const handleResetPassword = async () => {
-    if (!validatePasswords()) return;
-
-    // Simulate password reset success
-    setCurrentStep(4);
-    
-    // Auto redirect after 3 seconds
-    setTimeout(() => {
-      setCurrentStep(1); // Reset to email step for demo
-    }, 3000);
   };
 
   // Animated styles
@@ -140,33 +86,25 @@ export default function ForgotPasswordScreen() {
     transform: [{ translateY: cardTranslateY.value }],
   }));
 
-  const iconAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: iconOpacity.value,
-    transform: [{ scale: iconScale.value }],
-  }));
-
-  const pulseAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseAnimation.value }],
-  }));
-
   const renderStep1 = () => (
     <View style={styles.stepContainer}>
-      <Animated.View style={[styles.iconContainer, iconAnimatedStyle]}>
-        <Mail size={48} color="#d4af37" />
-      </Animated.View>
+      <View style={styles.iconContainer}>
+        <Mail size={32} color="#52C4A0" />
+      </View>
       
-      <Text style={styles.stepTitle}>Lupa Password?</Text>
+      <Text style={styles.stepTitle}>Forgot Password?</Text>
       <Text style={styles.stepSubtitle}>
-        Masukkan email Anda dan kami akan mengirimkan link untuk reset password
+        Enter your email and we'll send you a link to reset your password
       </Text>
 
       <View style={styles.inputContainer}>
-        <View style={styles.inputWrapper}>
-          <Mail size={20} color="#8F9BB3" style={styles.inputIcon} />
+        <Text style={styles.inputLabel}>Email</Text>
+        <View style={[styles.inputWrapper, emailError ? styles.inputError : null]}>
+          <Mail size={20} color="#9E9E9E" style={styles.inputIcon} />
           <TextInput
-            style={[styles.input, emailError ? styles.inputError : null]}
-            placeholder="Email"
-            placeholderTextColor="#8F9BB3"
+            style={styles.input}
+            placeholder="Enter your email"
+            placeholderTextColor="#BDBDBD"
             value={email}
             onChangeText={(text) => {
               setEmail(text);
@@ -186,196 +124,72 @@ export default function ForgotPasswordScreen() {
         onPress={handleSendReset}
         disabled={isLoading}
       >
-        <LinearGradient
-          colors={['#26A69A', '#00897B']}
-          style={styles.primaryButtonGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-        >
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <View style={styles.loadingSpinner} />
-              <Text style={styles.primaryButtonText}>Mengirim...</Text>
-            </View>
-          ) : (
-            <Text style={styles.primaryButtonText}>KIRIM LINK RESET</Text>
-          )}
-        </LinearGradient>
+        {isLoading ? (
+          <Text style={styles.primaryButtonText}>Sending...</Text>
+        ) : (
+          <Text style={styles.primaryButtonText}>Send Reset Link</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
 
   const renderStep2 = () => (
     <View style={styles.stepContainer}>
-      <Animated.View style={[styles.iconContainer, iconAnimatedStyle, pulseAnimatedStyle]}>
-        <CheckCircle size={48} color="#4CAF50" />
-      </Animated.View>
+      <View style={styles.iconContainer}>
+        <CheckCircle size={32} color="#4CAF50" />
+      </View>
       
-      <Text style={styles.stepTitle}>Email Terkirim!</Text>
+      <Text style={styles.stepTitle}>Email Sent!</Text>
       <Text style={styles.stepSubtitle}>
-        Kami telah mengirimkan link reset password ke{'\n'}
+        We've sent a password reset link to{'\n'}
         <Text style={styles.emailHighlight}>{email}</Text>
       </Text>
 
       <View style={styles.instructionContainer}>
-        <Text style={styles.instructionTitle}>Langkah selanjutnya:</Text>
+        <Text style={styles.instructionTitle}>Next steps:</Text>
         <Text style={styles.instructionText}>
-          1. Buka email Anda{'\n'}
-          2. Klik link reset password{'\n'}
-          3. Buat password baru{'\n'}
-          4. Login dengan password baru
+          1. Check your email{'\n'}
+          2. Click the reset password link{'\n'}
+          3. Create a new password{'\n'}
+          4. Sign in with your new password
         </Text>
       </View>
 
       <View style={styles.resendContainer}>
-        <Text style={styles.resendText}>Tidak menerima email?</Text>
+        <Text style={styles.resendText}>Didn't receive the email?</Text>
         <TouchableOpacity
           style={[styles.resendButton, resendTimer > 0 && styles.resendButtonDisabled]}
           onPress={handleResendEmail}
           disabled={resendTimer > 0}
         >
           <Text style={[styles.resendButtonText, resendTimer > 0 && styles.resendButtonTextDisabled]}>
-            {resendTimer > 0 ? `Kirim ulang (${resendTimer}s)` : 'Kirim ulang'}
+            {resendTimer > 0 ? `Resend (${resendTimer}s)` : 'Resend email'}
           </Text>
         </TouchableOpacity>
       </View>
 
       <TouchableOpacity
         style={styles.secondaryButton}
-        onPress={() => setCurrentStep(3)}
-      >
-        <Text style={styles.secondaryButtonText}>Sudah reset? Lanjut login</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  const renderStep3 = () => (
-    <View style={styles.stepContainer}>
-      <Animated.View style={[styles.iconContainer, iconAnimatedStyle]}>
-        <Lock size={48} color="#d4af37" />
-      </Animated.View>
-      
-      <Text style={styles.stepTitle}>Password Baru</Text>
-      <Text style={styles.stepSubtitle}>
-        Buat password baru yang kuat dan mudah diingat
-      </Text>
-
-      <View style={styles.inputContainer}>
-        <View style={styles.inputWrapper}>
-          <Lock size={20} color="#8F9BB3" style={styles.inputIcon} />
-          <TextInput
-            style={[styles.input, passwordError ? styles.inputError : null]}
-            placeholder="Password Baru"
-            placeholderTextColor="#8F9BB3"
-            value={newPassword}
-            onChangeText={(text) => {
-              setNewPassword(text);
-              if (passwordError) validatePasswords();
-            }}
-            secureTextEntry
-            autoComplete="password"
-          />
-        </View>
-      </View>
-
-      <View style={styles.inputContainer}>
-        <View style={styles.inputWrapper}>
-          <Lock size={20} color="#8F9BB3" style={styles.inputIcon} />
-          <TextInput
-            style={[styles.input, passwordError ? styles.inputError : null]}
-            placeholder="Konfirmasi Password Baru"
-            placeholderTextColor="#8F9BB3"
-            value={confirmPassword}
-            onChangeText={(text) => {
-              setConfirmPassword(text);
-              if (passwordError) validatePasswords();
-            }}
-            onBlur={validatePasswords}
-            secureTextEntry
-          />
-        </View>
-        {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
-      </View>
-
-      <TouchableOpacity
-        style={[styles.primaryButton, isLoading && styles.primaryButtonDisabled]}
-        onPress={handleResetPassword}
-        disabled={isLoading}
-      >
-        <LinearGradient
-          colors={['#26A69A', '#00897B']}
-          style={styles.primaryButtonGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-        >
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <View style={styles.loadingSpinner} />
-              <Text style={styles.primaryButtonText}>Menyimpan...</Text>
-            </View>
-          ) : (
-            <Text style={styles.primaryButtonText}>SIMPAN PASSWORD</Text>
-          )}
-        </LinearGradient>
-      </TouchableOpacity>
-    </View>
-  );
-
-  const renderStep4 = () => (
-    <View style={styles.stepContainer}>
-      <Animated.View style={[styles.iconContainer, iconAnimatedStyle]}>
-        <CheckCircle size={64} color="#4CAF50" />
-      </Animated.View>
-      
-      <Text style={styles.stepTitle}>Berhasil!</Text>
-      <Text style={styles.stepSubtitle}>
-        Password Anda telah berhasil diubah.{'\n'}
-        Anda akan diarahkan ke halaman login.
-      </Text>
-
-      <View style={styles.successContainer}>
-        <View style={styles.countdownContainer}>
-          <Clock size={20} color="#d4af37" />
-          <Text style={styles.countdownText}>Redirect otomatis dalam 3 detik</Text>
-        </View>
-      </View>
-
-      <TouchableOpacity
-        style={styles.primaryButton}
         onPress={() => router.replace('/(auth)/login')}
       >
-        <LinearGradient
-          colors={['#26A69A', '#00897B']}
-          style={styles.primaryButtonGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-        >
-          <Text style={styles.primaryButtonText}>LOGIN SEKARANG</Text>
-        </LinearGradient>
+        <Text style={styles.secondaryButtonText}>Back to Sign In</Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <LinearGradient
-        colors={['#1a365d', '#2d5a87', '#26A69A']}
-        style={styles.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-
       {/* Header */}
       <View style={styles.header}>
         <Link href="/(auth)/login" asChild>
           <TouchableOpacity style={styles.backButton}>
-            <ChevronLeft size={24} color="#FFFFFF" />
+            <ChevronLeft size={24} color="#424242" />
           </TouchableOpacity>
         </Link>
         
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Reset Password</Text>
-          <Text style={styles.headerSubtitle}>Pulihkan akses ke akun Anda</Text>
+          <Text style={styles.headerSubtitle}>Recover access to your account</Text>
         </View>
       </View>
 
@@ -384,19 +198,17 @@ export default function ForgotPasswordScreen() {
         <View style={styles.formCard}>
           {currentStep === 1 && renderStep1()}
           {currentStep === 2 && renderStep2()}
-          {currentStep === 3 && renderStep3()}
-          {currentStep === 4 && renderStep4()}
         </View>
       </Animated.View>
 
       {/* Footer */}
-      {currentStep !== 4 && (
+      {currentStep !== 2 && (
         <View style={styles.footer}>
           <View style={styles.loginContainer}>
-            <Text style={styles.loginText}>Ingat password Anda? </Text>
+            <Text style={styles.loginText}>Remember your password? </Text>
             <Link href="/(auth)/login" asChild>
               <TouchableOpacity>
-                <Text style={styles.loginLink}>Kembali ke login</Text>
+                <Text style={styles.loginLink}>Back to sign in</Text>
               </TouchableOpacity>
             </Link>
           </View>
@@ -409,61 +221,56 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  gradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingTop: 60,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingBottom: 20,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#FAFAFA',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   headerContent: {
     flex: 1,
   },
   headerTitle: {
     fontSize: 24,
-    fontFamily: 'Poppins-Bold',
-    color: '#FFFFFF',
+    fontFamily: 'Inter-Bold',
+    color: '#212121',
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#E8F5E8',
-    opacity: 0.8,
+    fontFamily: 'Inter-Regular',
+    color: '#757575',
   },
   formContainer: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingBottom: 40,
   },
   formCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 24,
-    padding: 32,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 25 },
-    shadowOpacity: 0.1,
-    shadowRadius: 45,
-    elevation: 20,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#F5F5F5',
     alignItems: 'center',
   },
   stepContainer: {
@@ -471,47 +278,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#F8FFFE',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
   },
   stepTitle: {
     fontSize: 24,
-    fontFamily: 'Poppins-Bold',
-    color: '#FFFFFF',
+    fontFamily: 'Inter-Bold',
+    color: '#212121',
     textAlign: 'center',
     marginBottom: 12,
   },
   stepSubtitle: {
     fontSize: 16,
-    fontFamily: 'Poppins-Regular',
-    color: '#E8F5E8',
+    fontFamily: 'Inter-Regular',
+    color: '#757575',
     textAlign: 'center',
     marginBottom: 32,
-    opacity: 0.8,
     lineHeight: 24,
   },
   emailHighlight: {
-    color: '#d4af37',
-    fontFamily: 'Poppins-SemiBold',
+    color: '#52C4A0',
+    fontFamily: 'Inter-SemiBold',
   },
   inputContainer: {
     width: '100%',
     marginBottom: 20,
   },
+  inputLabel: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#424242',
+    marginBottom: 8,
+  },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 16,
+    backgroundColor: '#FAFAFA',
+    borderRadius: 8,
     paddingHorizontal: 16,
-    height: 56,
+    height: 48,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#E0E0E0',
   },
   inputIcon: {
     marginRight: 12,
@@ -519,74 +331,58 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    fontFamily: 'Poppins-Regular',
-    color: '#1A2138',
+    fontFamily: 'Inter-Regular',
+    color: '#212121',
   },
   inputError: {
     borderColor: '#F44336',
-    borderWidth: 2,
+    backgroundColor: '#FFEBEE',
   },
   errorText: {
     fontSize: 12,
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Inter-Regular',
     color: '#F44336',
     marginTop: 4,
-    marginLeft: 16,
     textAlign: 'left',
     width: '100%',
   },
   primaryButton: {
     width: '100%',
-    borderRadius: 16,
-    overflow: 'hidden',
+    backgroundColor: '#52C4A0',
+    borderRadius: 8,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginTop: 8,
   },
   primaryButtonDisabled: {
-    opacity: 0.7,
-  },
-  primaryButtonGradient: {
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
+    opacity: 0.6,
   },
   primaryButtonText: {
     fontSize: 16,
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Inter-SemiBold',
     color: '#FFFFFF',
-    letterSpacing: 1,
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  loadingSpinner: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    borderTopColor: 'transparent',
-    marginRight: 8,
   },
   instructionContainer: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
+    backgroundColor: '#F8FFFE',
+    borderRadius: 8,
     padding: 16,
     marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#E8F5E8',
   },
   instructionTitle: {
     fontSize: 16,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#FFFFFF',
+    fontFamily: 'Inter-SemiBold',
+    color: '#212121',
     marginBottom: 8,
   },
   instructionText: {
     fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#E8F5E8',
+    fontFamily: 'Inter-Regular',
+    color: '#424242',
     lineHeight: 20,
-    opacity: 0.8,
   },
   resendContainer: {
     alignItems: 'center',
@@ -594,10 +390,9 @@ const styles = StyleSheet.create({
   },
   resendText: {
     fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#E8F5E8',
+    fontFamily: 'Inter-Regular',
+    color: '#757575',
     marginBottom: 8,
-    opacity: 0.8,
   },
   resendButton: {
     paddingHorizontal: 16,
@@ -608,49 +403,30 @@ const styles = StyleSheet.create({
   },
   resendButtonText: {
     fontSize: 14,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#d4af37',
+    fontFamily: 'Inter-SemiBold',
+    color: '#52C4A0',
   },
   resendButtonTextDisabled: {
-    color: '#8F9BB3',
+    color: '#9E9E9E',
   },
   secondaryButton: {
     width: '100%',
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: '#FAFAFA',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#E0E0E0',
   },
   secondaryButtonText: {
     fontSize: 16,
-    fontFamily: 'Poppins-Medium',
-    color: '#FFFFFF',
-  },
-  successContainer: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  countdownContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  countdownText: {
-    fontSize: 14,
-    fontFamily: 'Poppins-Medium',
-    color: '#d4af37',
-    marginLeft: 8,
+    fontFamily: 'Inter-Medium',
+    color: '#424242',
   },
   footer: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingHorizontal: 24,
+    paddingVertical: 32,
     alignItems: 'center',
   },
   loginContainer: {
@@ -659,13 +435,12 @@ const styles = StyleSheet.create({
   },
   loginText: {
     fontSize: 14,
-    fontFamily: 'Poppins-Regular',
-    color: '#FFFFFF',
-    opacity: 0.8,
+    fontFamily: 'Inter-Regular',
+    color: '#757575',
   },
   loginLink: {
     fontSize: 14,
-    fontFamily: 'Poppins-SemiBold',
-    color: '#d4af37',
+    fontFamily: 'Inter-SemiBold',
+    color: '#52C4A0',
   },
 });
